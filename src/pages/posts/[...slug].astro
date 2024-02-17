@@ -1,6 +1,6 @@
 ---
 import { getCollection } from "astro:content";
-import LayoutMDX from "../../layouts/LayoutMDX.astro";
+import MarkdownLayout from "../../layouts/MarkdownLayout.astro";
 
 type Post = {
   slug: string;
@@ -20,8 +20,8 @@ const { post } = Astro.props as { post: Post };
 const { Content } = await post.render();
 ---
 
-<LayoutMDX frontmatter={post.data}>
-  <div class="prose prose-invert">
+<MarkdownLayout frontmatter={post.data}>
+  <div class="prose prose-invert w-full max-w-2xl">
     <Content />
   </div>
-</LayoutMDX>
+</MarkdownLayout>

@@ -1,7 +1,7 @@
 {
   "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
-    "baseUrl": ".",
+    "baseUrl": "C:/Users/renan/OneDrive/Desktop/renanleonel.io",
     "paths": {
       "@/*": ["./src/*"]
     }
