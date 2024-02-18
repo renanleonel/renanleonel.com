@@ -3,7 +3,11 @@
   "compilerOptions": {
     "baseUrl": "C:/Users/renan/OneDrive/Desktop/renanleonel.io",
     "paths": {
-      "@/*": ["./src/*"]
-    }
+      "@/*": [
+        "./src/*"
+      ]
+    },
+    "jsx": "react-jsx",
+    "jsxImportSource": "react"
   }
 }

@@ -18,10 +18,16 @@ export async function getStaticPaths() {
 
 const { post } = Astro.props as { post: Post };
 const { Content } = await post.render();
+
+import CodeBlock from "@/components/CodeBlock.astro";
+
+const components = {
+  pre: CodeBlock,
+};
 ---
 
 <MarkdownLayout frontmatter={post.data}>
   <div class="prose prose-invert w-full max-w-2xl">
-    <Content />
+    <Content {components} />
   </div>
 </MarkdownLayout>

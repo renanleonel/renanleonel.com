@@ -1,0 +1,10 @@
+---
+import Pre from "./react/Pre";
+
+const props = Astro.props;
+---
+
+<Pre {...props} client:load>
+  <slot />
+</Pre>
+./react/pre
