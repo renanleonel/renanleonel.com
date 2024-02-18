@@ -9,13 +9,13 @@ interface Props {
 const { title, description, url, tags } = Astro.props;
 ---
 
-<div class="hover:bg-[#242424] p-2 rounded-lg border border-[#242424]">
+<div class="hover:bg-[#242424] px-2 py-4 rounded-md">
   <a href={url}>
     <h2 class="text-lg text-neutral-100 font-semibold">
       {title}
     </h2>
     <p class="text-neutral-400">{description}</p>
-    <div class="flex gap-2 pt-4">
+    <!-- <div class="flex gap-2 pt-4">
       {
         tags.map((tag) => (
           <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-white text-[#242424] hover:bg-white/80">
@@ -23,6 +23,6 @@ const { title, description, url, tags } = Astro.props;
           </div>
         ))
       }
-    </div>
+    </div> -->
   </a>
 </div>

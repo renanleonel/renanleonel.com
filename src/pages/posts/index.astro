@@ -1,0 +1,26 @@
+---
+import "@/styles/globals.css";
+import Post from "@/components/Post.astro";
+import Layout from "@/layouts/Layout.astro";
+
+const posts = await getCollection("posts");
+import { getCollection } from "astro:content";
+---
+
+<Layout title="Welcome to Astro.">
+  <main class="space-y-4">
+    <h1 class="text-xl font-bold">Posts</h1>
+    <div class="space-y-4">
+      {
+        posts.map((post) => (
+          <Post
+            title={post.data.title}
+            description={post.data.description}
+            url={`/posts/${post.slug}/`}
+            tags={post.data.tags}
+          />
+        ))
+      }
+    </div>
+  </main>
+</Layout>

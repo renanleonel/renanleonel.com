@@ -19,7 +19,7 @@ const CodeBlock = ({ children, ...props }: { children: any }) => {
         {children}
       </pre>
       <button
-        className="absolute top-2 right-2 flex items-center gap-2 p-1"
+        className="hidden md:flex absolute top-2 right-2 items-center gap-2 p-1"
         onClick={() => {
           copyToClipboard();
         }}
