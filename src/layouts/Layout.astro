@@ -19,17 +19,19 @@ import Header from "@/components/Header.astro";
     <title>{title}</title>
   </head>
   <body
-    class="flex flex-col justify-between items-center min-h-screen bg-[#101010] text-white p-4 py-8"
+    class="flex flex-col justify-between items-center min-h-screen bg-primary text-white px-4 md:p-4"
   >
     <Header />
     <main class="flex-grow w-full max-w-2xl lg:py-20">
       <slot />
     </main>
     <footer class="max-w-2xl w-full py-4">
-      <p class="text-balance text-sm leading-loose text-[#a1a1aa]">
-        Built by <a
-          href="https://www.linkedin.com/in/renanleonel/"
-          class="underline">renanleonel</a
+      <p
+        class="md:text-balance text-xs md:text-sm leading-loose text-neutral-500"
+      >
+        Built by
+        <a href="https://www.linkedin.com/in/renanleonel/" class="underline"
+          >renanleonel</a
         >. The source code is available on <a
           href="https://github.com/renanleonel/renanleonel.io"
           class="underline">Github</a

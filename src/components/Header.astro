@@ -8,21 +8,34 @@ import linkedin from "@/images/linkedin.svg";
 ---
 
 <header class="flex justify-between items-center w-full max-w-2xl py-4">
-  <a href="/" class="flex items-center space-x-2">
-    <div class="flex flex-col space-y-1 text-sm leading-none">
-      <span class="text-lg font-bold">renanleonel</span>
-      <span>front-end developer</span>
-    </div>
-  </a>
+  <header class="flex items-center space-x-4 text-neutral-200">
+    <a href="/">
+      <span>home</span>
+    </a>
+    <a href="/posts">
+      <span>posts</span>
+    </a>
+    <a href="/projects">
+      <span>projects</span>
+    </a>
+  </header>
   <div class="flex gap-2 transition-all duration-100">
     <a href="https://github.com/renanleonel" target="_blank">
-      <Image src={github} alt="GitHub" class="cursor-pointer hover:scale-110" />
+      <Image
+        src={github}
+        alt="GitHub"
+        class="cursor-pointer hover:scale-110"
+        width={20}
+        height={20}
+      />
     </a>
     <a href="https://www.linkedin.com/in/renanleonel/" target="_blank">
       <Image
         src={linkedin}
         alt="LinkedIn"
         class="cursor-pointer hover:scale-110"
+        width={20}
+        height={20}
       />
     </a>
     <a href="https://dev.to/renao" target="_blank">
@@ -30,12 +43,18 @@ import linkedin from "@/images/linkedin.svg";
         src={dev}
         alt="DEV Community"
         class="cursor-pointer hover:scale-110 invert"
-        width={24}
-        height={24}
+        width={20}
+        height={20}
       />
     </a>
     <a href="https://medium.com/@renanleonel" target="_blank">
-      <Image src={medium} alt="Medium" class="cursor-pointer hover:scale-110" />
+      <Image
+        src={medium}
+        alt="Medium"
+        class="cursor-pointer hover:scale-110 invert"
+        width={20}
+        height={20}
+      />
     </a>
   </div>
 </header>
