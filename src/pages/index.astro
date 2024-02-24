@@ -15,6 +15,7 @@ import tailwind from "@/images/tailwind.svg";
 import python from "@/images/python.svg";
 import git from "@/images/git.svg";
 import Theme from "@/components/Theme.astro";
+import Icons from "@/components/Icons.astro";
 ---
 
 <Layout title="Welcome to Astro.">
@@ -26,84 +27,8 @@ import Theme from "@/components/Theme.astro";
       technologies that you will probably see me writing about:
     </p>
 
-    <div class="flex flex-wrap w-full items-center gap-2 mb-12">
-      <Image
-        src={react}
-        alt="React"
-        width={32}
-        height={32}
-        class="hover:scale-110"
-      />
-      <Image
-        src={nextjs}
-        alt="Next.js"
-        width={32}
-        height={32}
-        class="hover:scale-110"
-      />
-      <Image
-        src={astro}
-        alt="Astro"
-        width={32}
-        height={32}
-        class="hover:scale-110"
-      />
-      <Image
-        src={typescript}
-        alt="TypeScript"
-        width={32}
-        height={32}
-        class="hover:scale-110"
-      />
-      <Image
-        src={javascript}
-        alt="JavaScript"
-        width={32}
-        height={32}
-        class="hover:scale-110"
-      />
-      <Image
-        src={tailwind}
-        alt="Tailwind CSS"
-        width={32}
-        height={32}
-        class="hover:scale-110"
-      />
-      <Image
-        src={html}
-        alt="HTML"
-        width={32}
-        height={32}
-        class="hover:scale-110"
-      />
-      <Image
-        src={css}
-        alt="CSS"
-        width={32}
-        height={32}
-        class="hover:scale-110"
-      />
-      <Image
-        src={node}
-        alt="Node.js"
-        width={32}
-        height={32}
-        class="hover:scale-110"
-      />
-      <Image
-        src={python}
-        alt="Python"
-        width={32}
-        height={32}
-        class="hover:scale-110"
-      />
-      <Image
-        src={git}
-        alt="Git"
-        width={32}
-        height={32}
-        class="hover:scale-110"
-      />
+    <div class="mb-12">
+      <Icons />
     </div>
 
     <p class="text-neutral-700 dark:text-neutral-200 mb-4">
