@@ -7,7 +7,7 @@ const posts = await getCollection("posts");
 import { getCollection } from "astro:content";
 ---
 
-<Layout title="Welcome to Astro.">
+<Layout title="posts | renan leonel">
   <main class="space-y-4">
     <h1 class="text-xl font-bold">Posts</h1>
     <div class="space-y-4">
@@ -17,7 +17,6 @@ import { getCollection } from "astro:content";
             title={post.data.title}
             description={post.data.description}
             url={`/posts/${post.slug}/`}
-            tags={post.data.tags}
           />
         ))
       }
