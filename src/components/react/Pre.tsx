@@ -20,9 +20,7 @@ const CodeBlock = ({ children, ...props }: { children: any }) => {
       </pre>
       <button
         className="hidden md:flex absolute top-2 right-2 items-center gap-2 p-1"
-        onClick={() => {
-          copyToClipboard();
-        }}
+        onClick={copyToClipboard}
       >
         {isCopied ? (
           <Check width={16} height={16} />

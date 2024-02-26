@@ -1,0 +1,319 @@
+---
+title: "Next.js 14 authentication"
+pubDate: 2024-02-26
+description: "Creating an authentication flow in Next.js 14 using NextAuth v5"
+author: "Renan Leonel"
+image:
+  url: "https://docs.astro.build/assets/full-logo-light.png"
+  alt: "The full Astro logo."
+tags: ["Next.js", "NextAuth", "Authentication"]
+---
+
+This is a brief tutorial of how to create an authentication flow in Next.js 14 using NextAuth v5 using the middleware file. These are the steps we are going to follow:
+
+1. **[Creating the project](#creating-the-project)**: Creating a new Next.js project with NextAuth v5.
+
+2. **[Setting up NextAuth](#setting-up-nextauth)**: Configuring NextAuth to use the credentials provider.
+
+3. **[Protecting routes](#protecting-routes)**: Creating a middleware file to protect routes.
+
+### Creating the project
+
+First, we need to create a new [Next.js](https://nextjs.org/docs/getting-started/installation) project. We can do that by running the following command:
+
+```bash
+npx create-next-app@latest
+```
+
+After that, we need to install NextAuth v5:
+
+```bash
+pnpm add next-auth@beta
+```
+
+If you face any issues with the installation, you can check the official documentation for [Next.js](https://nextjs.org/docs/getting-started/installation) and [NextAuth](https://authjs.dev/guides/upgrade-to-v5).
+
+### Setting up NextAuth
+
+Next, we need to create a new file called `app/api/auth/[...nextauth]/route.ts` and add the following code:
+
+```ts
+export { GET, POST } from "@/auth";
+```
+
+Inside `src` folder, create a file called `auth.ts`, where we are going to create a mock function to simulate the access to the database. This is the function that will be called whenever the `signIn` method from NextAuth is called.
+
+```ts
+import NextAuth from "next-auth";
+import { authConfig } from "./auth.config";
+import Credentials from "next-auth/providers/credentials";
+
+async function getUser(email: string, password: string): Promise<any> {
+  return {
+    id: 1,
+    name: "test user",
+    email: email,
+    password: password,
+  };
+}
+
+export const {
+  auth,
+  signIn,
+  signOut,
+  handlers: { GET, POST },
+} = NextAuth({
+  ...authConfig,
+  providers: [
+    Credentials({
+      name: "credentials",
+      credentials: {
+        email: { label: "email", type: "text" },
+        password: { label: "password", type: "password" },
+      },
+      async authorize(credentials) {
+        const user = await getUser(
+          credentials.email as string,
+          credentials.password as string,
+        );
+
+        return user ?? null;
+      },
+    }),
+  ],
+});
+```
+
+Also, create a file called `auth.config.ts` and add the following code:
+
+```ts
+import type { NextAuthConfig } from "next-auth";
+
+export const authConfig = {
+  session: {
+    strategy: "jwt",
+  },
+  pages: {
+    error: "/",
+    signIn: "/",
+    signOut: "/",
+  },
+  callbacks: {
+    authorized({ auth }) {
+      const isAuthenticated = !!auth?.user;
+
+      return isAuthenticated;
+    },
+  },
+  providers: [],
+} satisfies NextAuthConfig;
+```
+
+Now, we need to define the routes of our application. We are going to create two pages, the root page where all users can access, and the /protected page, where only logged users can access.
+
+First, create a file in `src/lib/routes.ts`. This constants will be used in the middleware verification.
+
+```ts
+export const ROOT = "/";
+export const PUBLIC_ROUTES = ["/"];
+export const DEFAULT_REDIRECT = "/protected";
+```
+
+Then, create the two pages, with a `Form` component
+
+```tsx
+import Form from "@/components/form";
+
+const Root = () => {
+  return (
+    <main className="flex items-center justify-center h-screen w-screen">
+      <Form />
+    </main>
+  );
+};
+
+export default Root;
+```
+
+```tsx
+import { auth } from "@/auth";
+import { logout } from "@/lib/actions";
+import { Button } from "@/components/ui/button";
+
+const Protected = async () => {
+  const session = await auth();
+
+  session?.user?.email;
+
+  return (
+    <form
+      action={logout}
+      className="h-screen w-screen flex flex-col justify-center items-center gap-10"
+    >
+      <div>
+        <p className="text-white">{session?.user?.name}</p>
+        <p className="text-white">{session?.user?.email}</p>
+      </div>
+      <Button type="submit" className="w-40" variant="secondary">
+        logout
+      </Button>
+    </form>
+  );
+};
+
+export default Protected;
+```
+
+```tsx
+"use client";
+
+import { login } from "@/lib/actions";
+import { useFormState } from "react-dom";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+
+const loginInitialState = {
+  message: "",
+  errors: {
+    email: "",
+    password: "",
+    credentials: "",
+    unknown: "",
+  },
+};
+
+const Form = () => {
+  const [formState, formAction] = useFormState(login, loginInitialState);
+
+  return (
+    <form action={formAction} className="space-y-4 w-full max-w-sm">
+      <Input required name="email" placeholder="email" />
+      <Input required name="password" type="password" placeholder="password" />
+      <Button variant="secondary" className="w-full" type="submit">
+        submit
+      </Button>
+    </form>
+  );
+};
+
+export default Form;
+```
+
+We are using zod to validate the our form with the following schema:
+
+```ts
+import { z } from "zod";
+
+export const loginSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, { message: "Email required!" })
+    .email({ message: "Invalid email!" }),
+  password: z
+    .string()
+    .trim()
+    .min(1, { message: "Password required!" })
+    .min(8, { message: "Password must have at least 8 characters!" }),
+});
+```
+
+Now, we need to create a file called `actions.ts` in `src/lib` folder. This file will contain the server action that will be used in the form.
+
+```ts
+"use server";
+
+import { AuthError } from "next-auth";
+import { signIn, signOut } from "@/auth";
+import { loginSchema } from "@/types/schema";
+
+const defaultValues = {
+  email: "",
+  password: "",
+};
+
+export async function login(prevState: any, formData: FormData) {
+  try {
+    const email = formData.get("email");
+    const password = formData.get("password");
+
+    const validatedFields = loginSchema.safeParse({
+      email: email,
+      password: password,
+    });
+
+    if (!validatedFields.success) {
+      return {
+        message: "validation error",
+        errors: validatedFields.error.flatten().fieldErrors,
+      };
+    }
+
+    await signIn("credentials", formData);
+
+    return {
+      message: "success",
+      errors: {},
+    };
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case "CredentialsSignin":
+          return {
+            message: "credentials error",
+            errors: {
+              ...defaultValues,
+              credentials: "incorrect email or password",
+            },
+          };
+        default:
+          return {
+            message: "unknown error",
+            errors: {
+              ...defaultValues,
+              unknown: "unknown error",
+            },
+          };
+      }
+    }
+    throw error;
+  }
+}
+
+export async function logout() {
+  await signOut();
+}
+```
+
+### Protecting routes
+
+Finally, we need to create a middleware file to protect the routes. Create a file called `middleware.ts` in `src/lib` folder and add the following code:
+
+```ts
+import NextAuth from "next-auth";
+import { authConfig } from "@/auth.config";
+import { DEFAULT_REDIRECT, PUBLIC_ROUTES, ROOT } from "@/lib/routes";
+
+const { auth } = NextAuth(authConfig);
+
+export default auth((req) => {
+  const { nextUrl } = req;
+
+  const isAuthenticated = !!req.auth;
+  const isPublicRoute = PUBLIC_ROUTES.includes(nextUrl.pathname);
+
+  if (isPublicRoute && isAuthenticated)
+    return Response.redirect(new URL(DEFAULT_REDIRECT, nextUrl));
+
+  if (!isAuthenticated && !isPublicRoute)
+    return Response.redirect(new URL(ROOT, nextUrl));
+});
+
+export const config = {
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+};
+```
+
+Here, we are retrieving if the user is authenticated for every route in our application and verifying the current path. If the user has a current session and tried to go back to the login page, they will be redirected back to the /protected page. If the user tries to access any route that isn’t public without a session, they will be redirected to the login page. You can use any matcher suitable for your application.
+
+Now, you have a complete authentication flow using middleware in Next.js 14 with NextAuth v5! If you face any problems, you can check the full code [here](https://github.com/renanleonel/next-auth-v5-middleware) to help you out.
