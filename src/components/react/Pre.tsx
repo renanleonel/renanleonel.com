@@ -19,6 +19,7 @@ const CodeBlock = ({ children, ...props }: { children: any }) => {
         {children}
       </pre>
       <button
+        aria-label="Copy to clipboard"
         className="hidden md:flex absolute top-2 right-2 items-center gap-2 p-1"
         onClick={copyToClipboard}
       >
