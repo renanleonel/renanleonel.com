@@ -17,6 +17,8 @@ This is a brief tutorial of how to create an authentication flow in Next.js 14 u
 
 3. **[Protecting routes](#protecting-routes)**: Creating a middleware file to protect routes.
 
+You can also find this article on [DEV](https://dev.to/renao/nextjs-14-authentication-38o7).
+
 ### Creating the project
 
 First, we need to create a new [Next.js](https://nextjs.org/docs/getting-started/installation) project. We can do that by running the following command:
@@ -316,4 +318,4 @@ export const config = {
 
 Here, we are retrieving if the user is authenticated for every route in our application and verifying the current path. If the user has a current session and tried to go back to the login page, they will be redirected back to the /protected page. If the user tries to access any route that isn’t public without a session, they will be redirected to the login page. You can use any matcher suitable for your application.
 
-Now, you have a complete authentication flow using middleware in Next.js 14 with NextAuth v5! If you face any problems, you can check the [github repository](https://github.com/renanleonel/next-auth-v5-middleware) with the full code to help you out.
+Now, you have a complete authentication flow using middleware in Next.js 14 with NextAuth v5! If you face any problems, you can check the [GitHub repository](https://github.com/renanleonel/next-auth-v5-middleware) with the full code to help you out.
