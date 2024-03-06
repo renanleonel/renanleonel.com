@@ -1,18 +1,24 @@
 ---
+import Badge from "./Badge.astro";
+
 interface Props {
   title: string;
   description: string;
   url: string;
+  index: number;
 }
 
-const { title, description, url } = Astro.props;
+const { title, description, url, index } = Astro.props;
 ---
 
 <div class="hover:bg-neutral-100 dark:hover:bg-[#242424] px-2 py-4 rounded-md">
   <a href={url}>
-    <h2 class="text-lg font-semibold">
-      {title}
-    </h2>
+    <div class="flex items-center gap-4">
+      <h2 class="text-lg font-semibold">
+        {title}
+      </h2>
+      {index === 0 && <Badge>new!</Badge>}
+    </div>
     <p>{description}</p>
   </a>
 </div>
