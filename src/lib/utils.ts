@@ -18,10 +18,8 @@ export function formatDate(date: string) {
 
   let formattedDate = "";
 
-  if (daysAgo > 1) {
+  if (daysAgo > 0) {
     formattedDate = `${daysAgo}d ago`;
-  } else if (daysAgo === 1) {
-    formattedDate = "Yesterday";
   } else {
     formattedDate = "Today";
   }
