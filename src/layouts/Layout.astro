@@ -5,8 +5,12 @@ interface Props {
 
 const { title } = Astro.props;
 
-import Theme from "@/components/Theme.astro";
 import Header from "@/components/Header.astro";
+import Theme from "@/components/Theme.astro";
+
+import Analytics from "@vercel/analytics/astro";
+import SpeedInsights from "@vercel/speed-insights/astro";
+
 import { ViewTransitions } from "astro:transitions";
 ---
 
@@ -20,6 +24,8 @@ import { ViewTransitions } from "astro:transitions";
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     <ViewTransitions />
+    <Analytics />
+    <SpeedInsights />
   </head>
   <body
     class="flex flex-col justify-between items-center min-h-screen dark:bg-primary text-neutral-700 dark:text-neutral-200 px-4 md:p-4"
