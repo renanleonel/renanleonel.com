@@ -1,5 +1,5 @@
-import { Copy, Check } from "lucide-react";
-import { useState, createRef } from "react";
+import { Check, Copy } from "lucide-react";
+import { createRef, useState } from "react";
 
 const CodeBlock = ({ children, ...props }: { children: any }) => {
   const ref = createRef<HTMLPreElement>();

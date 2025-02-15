@@ -47,7 +47,7 @@ import NextAuth from "next-auth";
 import { authConfig } from "./auth.config";
 import Credentials from "next-auth/providers/credentials";
 
-async function getUser(email: string, password: string): Promise<any> {
+async function getUser(email: string, password: string): Promise {
   return {
     id: 1,
     name: "test user",
