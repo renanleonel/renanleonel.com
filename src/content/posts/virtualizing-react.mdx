@@ -1,0 +1,339 @@
+---
+title: "Virtualizing React"
+pubDate: 2025-03-05
+description: "A comprehensive guide to implementing virtualization in React applications using pure implementation and TanStack Virtual"
+author: "Renan Leonel"
+---
+
+Rendering large lists efficiently in React can be challenging. When dealing with hundreds or thousands of items, the browser's performance can suffer significantly. This guide explores two powerful approaches to solve this problem through virtualization: a pure implementation built from scratch and a solution using TanStack Virtual. By the end, you'll understand not only how virtualization works under the hood but also when to choose each approach for your specific needs.
+
+We'll explore:
+
+1. **[Understanding Virtualization](#understanding-virtualization)**: What virtualization is and why it's important
+2. **[Pure Implementation](#pure-implementation)**: Step-by-step guide to implement virtualization from scratch
+3. **[TanStack Virtual Implementation](#tanstack-virtual-implementation)**: Using a battle-tested library for virtualization
+4. **[Comparing Approaches](#comparing-approaches)**: When to use each approach
+
+You can also find this article on [DEV](https://dev.to/rnnlnl/virtualizing-react-20fb) and [Medium](https://medium.com/@renanleonel/virtualizing-react-f26361d5960b).
+
+### Understanding Virtualization
+
+Virtualization is a technique that renders only the visible portion of a large list of items. Instead of rendering all items at once, it maintains a "window" of visible elements that moves as the user scrolls, significantly reducing the number of DOM elements present at any given time.
+
+To understand how virtualization works, let's break down its four key components using a simple analogy:
+
+1. **Virtual Window**
+
+   - Imagine reading a 500-page book through a small window that shows only 20 pages at once
+   - Just like you can only see these 20 pages, the DOM only renders the visible items
+   - As you slide the window up or down the book, new pages come into view while others hide
+   - In our select component, instead of rendering all 500 items, we show only what fits in view
+
+2. **Buffer Zones**
+
+   - Like keeping your thumb a few pages ahead and behind where you're reading
+   - We keep 10 extra items rendered above and 10 below the visible area
+   - This preparation ensures smooth transitions, just like having your thumb ready to flip the page
+   - Example: While 20 items are visible, we actually render 40 (20 visible + 20 buffer)
+
+3. **Height Calculation**
+
+   - Similar to keeping the book's full thickness even though you're only viewing a small section
+   - We maintain the full scroll height (500 items × 32px) using an invisible element
+   - This preserves the natural feel of scrolling through a long list
+   - Example: A 16,000px tall container represents our full 500-item list
+
+4. **Position Management**
+   - Like numbering each page and knowing exactly where to slide the window
+   - Each item's position is precisely calculated based on its index
+   - If you're at item #100, we position it at exactly 3,200px from the top
+   - This creates the illusion of a complete list while managing only a few elements
+
+This approach offers several key benefits:
+
+- **Memory Efficiency**: Instead of managing thousands of DOM nodes, the browser only needs to handle a few dozen
+- **CPU Performance**: Less DOM manipulation means reduced CPU usage during scrolling
+- **Smooth Scrolling**: With fewer elements to process, the browser can maintain 60fps even during rapid scrolling
+- **Initial Load Speed**: Applications load faster since they don't need to create all DOM nodes upfront
+- **Battery Life**: Reduced processing requirements lead to better battery life on mobile devices
+
+Understanding these mechanics is crucial for implementing virtualization effectively, whether you're building it from scratch or using a library like TanStack Virtual.
+
+Let's look at a practical comparison of resource usage between virtualized and non-virtualized lists. In this example, our virtualized implementation maintains a window of approximately 60 visible nodes at any time, regardless of the total list size:
+
+| List Size | Non-virtualized DOM Nodes | Virtualized DOM Nodes | Memory Usage Reduction |
+| --------- | ------------------------- | --------------------- | ---------------------- |
+| 1,000     | ~1,000                    | ~60                   | ~94%                   |
+| 10,000    | ~10,000                   | ~60                   | ~99.4%                 |
+| 100,000   | ~100,000                  | ~60                   | ~99.94%                |
+
+### Pure Implementation
+
+Let's start with implementing virtualization from scratch. This approach gives us complete control over the implementation and helps understand the core concepts.
+
+First, we'll define our constants:
+
+```typescript
+const ITEM_HEIGHT = 32; // Height of each item in pixels
+const BUFFER_ITEMS = 20; // Number of items to render above/below viewport
+const TOTAL_ITEMS = 500; // Total number of items in the list
+const VIEWPORT_HEIGHT = 300; // Height of the visible area
+```
+
+The core logic involves three main parts:
+
+1. **Scroll Position Tracking**: Monitor the scroll position to determine which items should be visible
+2. **Visible Items Calculation**: Calculate the start and end indices of visible items
+3. **Rendering**: Position the visible items correctly within the viewport
+
+Here's the implementation:
+
+```typescript
+export const Pure = () => {
+  const [scrollTop, setScrollTop] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Calculate which items should be visible
+  const startIndex = Math.max(
+    0,
+    Math.floor(scrollTop / ITEM_HEIGHT) - BUFFER_ITEMS
+  );
+
+  const endIndex = Math.min(
+    ALL_ITEMS.length,
+    Math.ceil((scrollTop + VIEWPORT_HEIGHT) / ITEM_HEIGHT) + BUFFER_ITEMS
+  );
+
+  const visibleItems = ALL_ITEMS.slice(startIndex, endIndex);
+
+  return (
+    <Select>
+      <SelectContent>
+        <div
+          ref={containerRef}
+          onScroll={handleScroll}
+          style={{ height: VIEWPORT_HEIGHT }}
+          className='relative overflow-auto'
+        >
+          {/* Total height placeholder */}
+          <div
+            className='absolute top-0 left-0 w-full'
+            style={{ height: ALL_ITEMS.length * ITEM_HEIGHT }}
+          />
+
+          {/* Rendered items */}
+          <div
+            className='absolute right-0 left-0'
+            style={{ top: startIndex * ITEM_HEIGHT }}
+          >
+            {visibleItems.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </div>
+        </div>
+      </SelectContent>
+    </Select>
+  );
+};
+```
+
+Let's break down the implementation to understand how each piece works together:
+
+1. **Container Setup**
+
+```typescript
+<div
+  ref={containerRef}
+  onScroll={handleScroll}
+  style={{ height: VIEWPORT_HEIGHT }}
+  className='relative overflow-auto'
+>
+```
+
+This is our viewport container. It has a fixed height (`VIEWPORT_HEIGHT = 300px`) and enables scrolling. Think of it as the "window" through which we view our items.
+
+2. **Total Height Placeholder**
+
+```typescript
+<div
+  className='absolute top-0 left-0 w-full'
+  style={{ height: ALL_ITEMS.length * ITEM_HEIGHT }}
+/>
+```
+
+This invisible div maintains the total scrollable height. For example, with 1,000 items at 32px each, it creates a 32,000px tall scrollable area. This ensures the scrollbar behaves naturally, as if all items were actually rendered.
+
+3. **Visible Items Container**
+
+```typescript
+<div
+  className='absolute right-0 left-0'
+  style={{ top: startIndex * ITEM_HEIGHT }}
+>
+  {visibleItems.map((item) => (
+    <SelectItem key={item.value} value={item.value}>
+      {item.label}
+    </SelectItem>
+  ))}
+</div>
+```
+
+This container holds only the currently visible items. Its position is dynamically calculated based on scroll position:
+
+- If you're scrolled to item #50, `startIndex = 50`
+- The container is positioned at `top: 50 * 32px = 1600px`
+- Only items 50-70 (plus buffer) are actually rendered
+
+4. **Scroll Position Tracking**
+
+```typescript
+const startIndex = Math.max(
+  0,
+  Math.floor(scrollTop / ITEM_HEIGHT) - BUFFER_ITEMS,
+);
+
+const endIndex = Math.min(
+  ALL_ITEMS.length,
+  Math.ceil((scrollTop + VIEWPORT_HEIGHT) / ITEM_HEIGHT) + BUFFER_ITEMS,
+);
+```
+
+This calculation determines which items should be rendered:
+
+- `scrollTop` tells us how far we've scrolled
+- We divide by `ITEM_HEIGHT` to get the first visible item
+- We add `BUFFER_ITEMS` (20) above and below for smooth scrolling
+- `Math.max` and `Math.min` ensure we stay within list bounds
+
+The magic happens when scrolling:
+
+1. User scrolls → `scrollTop` changes
+2. New `startIndex` and `endIndex` are calculated
+3. `visibleItems` array updates with new slice of items
+4. Visible items container repositions using `top` style
+5. Only ~60 items exist in DOM at any time (20 visible + 40 buffer)
+
+This creates the illusion of scrolling through thousands of items while maintaining excellent performance.
+
+### TanStack Virtual Implementation
+
+TanStack Virtual provides a more abstracted approach with additional features and optimizations out of the box. Here's how to implement the same functionality:
+
+```typescript
+export const TanStack = () => {
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  const virtualizer = useVirtualizer({
+    count: TOTAL_ITEMS,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => ITEM_HEIGHT,
+    overscan: BUFFER_ITEMS,
+  });
+
+  return (
+    <Select>
+      <SelectContent>
+        <div
+          ref={parentRef}
+          className='relative overflow-auto'
+          style={{ height: VIEWPORT_HEIGHT }}
+        >
+          <div
+            className='relative w-full'
+            style={{ height: `${virtualizer.getTotalSize()}px` }}
+          >
+            {virtualizer.getVirtualItems().map((virtualItem) => {
+              const item = ALL_ITEMS[virtualItem.index];
+
+              return (
+                <SelectItem
+                  key={item.value}
+                  value={item.value}
+                  className='absolute left-0 w-full'
+                  style={{
+                    height: `${ITEM_HEIGHT}px`,
+                    transform: `translateY(${virtualItem.start}px)`,
+                  }}
+                >
+                  {item.label}
+                </SelectItem>
+              );
+            })}
+          </div>
+        </div>
+      </SelectContent>
+    </Select>
+  );
+};
+```
+
+### Comparing Approaches
+
+Now that we've explored both implementations, let's analyze their strengths and use cases. While both solutions effectively handle virtualization, they serve different needs and come with distinct trade-offs. Understanding these differences will help you choose the right approach for your specific requirements.
+
+#### Pure Implementation
+
+- **When to Use:**
+
+  - Learning virtualization concepts
+  - Simple lists with fixed-height items
+  - Projects where bundle size is critical
+  - Need for minimal dependencies
+
+- **Key Benefits:**
+  - Full control over implementation
+  - Zero external dependencies
+  - Smaller bundle size
+  - Great for understanding core concepts
+
+#### TanStack Virtual
+
+- **When to Use:**
+
+  - Production applications
+  - Complex virtualization needs
+  - Dynamic height items
+  - Need for advanced features
+
+- **Key Benefits:**
+  - Production-ready with edge case handling
+  - Dynamic size support
+  - Built-in optimizations
+  - TypeScript support
+  - Active maintenance
+
+#### Decision Matrix
+
+| Feature Need         | Pure | TanStack |
+| -------------------- | ---- | -------- |
+| Learning/Educational | ✅   | ❌       |
+| Simple Fixed Lists   | ✅   | ✅       |
+| Dynamic Heights      | ❌   | ✅       |
+| Production-Ready     | ⚠️   | ✅       |
+| Bundle Size Priority | ✅   | ❌       |
+| Advanced Features    | ❌   | ✅       |
+
+### Try It Yourself!
+
+To fully appreciate the impact of virtualization, I encourage you to clone the [demo repository](https://github.com/renanleonel/react-virtualization) and experiment with different list sizes. Try setting `TOTAL_ITEMS` to values like 1,000, 2,000, and even 10,000. Open your browser's DevTools (F12) and inspect the DOM elements for both implementations:
+
+- In the non-virtualized version, you'll see thousands of `<SelectItem>` elements being rendered at once, causing significant performance issues and potential browser freezing when the select is opened.
+- In contrast, both virtualized implementations (Pure and TanStack) maintain only about 60 DOM elements at any time (visible items + buffer), regardless of the total list size. You can verify this by inspecting the DOM as you scroll - elements are dynamically added and removed to maintain optimal performance.
+
+This hands-on comparison clearly demonstrates why virtualization is crucial for handling large datasets in web applications.
+
+### Conclusion
+
+Virtualization significantly improves application performance by rendering only what users see. We explored two ways to achieve this:
+
+- A **pure implementation** that gives you complete control and understanding of the virtualization process
+- **TanStack Virtual** that provides a production-ready solution with advanced features out of the box
+
+Both approaches effectively solve the same problem: handling large lists efficiently. Choose the one that best fits your needs—whether it's learning the concepts, having full control, or quickly implementing a robust solution.
+
+### Resources
+
+- [Demo Repository](https://github.com/renanleonel/react-virtualization)
+- [TanStack Virtual Documentation](https://tanstack.com/virtual/latest)
