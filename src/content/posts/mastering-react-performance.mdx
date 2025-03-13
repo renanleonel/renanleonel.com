@@ -1,0 +1,632 @@
+---
+title: "Mastering React Performance"
+pubDate: 2025-03-12
+description: "A comprehensive guide to optimizing React applications for speed and efficiency"
+author: "Renan Leonel"
+---
+
+Optimizing React apps isn’t always easy—I’ve dealt with slow renders, laggy interactions, and unresponsive UIs more times than I can count. Over time, I’ve learned a range of techniques, from quick fixes to advanced optimizations, that I rely on daily to keep applications fast and responsive. In this guide, I’ll share the most effective ones. By the end, you’ll have practical insights to improve your app’s performance.
+
+We'll explore:
+
+1. [Smart Data Manipulation](#smart-data-manipulation): Optimizing array operations and data structures
+2. [Strategic Rendering](#strategic-rendering): Preventing unnecessary re-renders
+3. [Advanced Memoization](#advanced-memoization): Using React's optimization hooks effectively
+4. [Function and Event Optimization](#function-and-event-optimization): Writing performant event handlers
+5. [Component Virtualization](#component-virtualization): Efficiently handling large lists
+6. [Data Fetching and Caching](#data-fetching-and-caching): Optimizing API interactions with React Query
+7. [Debouncing and Throttling](#debouncing-and-throttling): Controlling high-frequency events
+8. [Suspense for Data Fetching](#suspense-for-data-fetching): Managing asynchronous data efficiently
+
+You can also find this article on [DEV](https://dev.to/rnnlnl/mastering-react-performance-4dd7) and [Medium](https://medium.com/@renanleonel/mastering-react-performance-c3d21f85b612).
+
+## Smart Data Manipulation
+
+The way we manipulate data can dramatically impact our application's performance. Small improvements in data handling can lead to significant performance gains, especially when dealing with large datasets.
+
+### Array Operations Order
+
+The order of array operations can significantly impact performance. Consider the difference between `map().filter()` and `filter().map()`:
+
+```javascript
+// Less efficient: Transforms all items, then filters
+const inefficientResult = largeArray
+  .map((item) => transformExpensiveOperation(item))
+  .filter((item) => item.isValid);
+
+// More efficient: Filters first, then only transforms what's needed
+const efficientResult = largeArray
+  .filter((item) => isValidBeforeTransform(item))
+  .map((item) => transformExpensiveOperation(item));
+```
+
+When `filter()` comes first, we avoid unnecessary transformations on items that will be filtered out. This becomes especially important with large datasets or expensive transformations. The performance impact grows with the size of the array and the complexity of the transformation function.
+
+For example, if you have 10,000 items but only 100 meet your criteria, placing `filter()` first means you'll only perform the expensive transformation 100 times instead of 10,000 times. This can be the difference between a smooth experience and a frozen UI.
+
+### Maps vs. Arrays for Lookups
+
+For frequently accessed data, using JavaScript's `Map` instead of arrays can provide dramatic performance improvements:
+
+```javascript
+// O(n) lookup time - gets slower as array grows
+const findUserInArray = (users: User[], id: string) => {
+  return users.find(user => user.id === id);
+};
+
+// O(1) lookup time - consistent speed regardless of size
+const findUserInMap = (usersMap: Map<string, User>, id: string) => {
+  return usersMap.get(id);
+};
+
+// Transform array to Map for repeated lookups
+const createUsersMap = (users: User[]) => {
+  const usersMap = new Map();
+
+  users.forEach(user => usersMap.set(user.id, user));
+
+  return usersMap;
+};
+
+// Usage
+const users = [
+  /* array of user objects */
+];
+
+const usersMap = createUsersMap(users);
+
+// Fast lookup
+const user = usersMap.get("user-123");
+```
+
+The `Map` data structure offers several advantages over plain objects:
+
+- Better performance for frequent additions and removals
+- Keys can be any value (not just strings)
+- Built-in size property and iteration methods
+
+This approach is ideal for data that's referenced multiple times throughout your application, especially in deeply nested components. The performance difference becomes exponentially larger as your dataset grows.
+
+Consider a scenario where you frequently need to look up users by ID across multiple components. With an array, each lookup requires iterating through thousands of items, making performance degrade as the dataset grows. In contrast, using a `Map` enables constant-time lookups, ensuring consistent speed regardless of the number of users. For data-intensive applications, this optimization can drastically improve responsiveness and scalability.
+
+### Single-Pass Data Transformation
+
+Combine multiple operations into a single pass when possible:
+
+```javascript
+// Inefficient: Multiple array iterations
+const filtered = data.filter((item) => item.active);
+const transformed = filtered.map((item) => transform(item));
+const total = transformed.reduce((sum, item) => sum + item.value, 0);
+
+// Efficient: Single pass with reduce
+const { filtered, transformed, total } = data.reduce(
+  (result, item) => {
+    if (!item.active) return result;
+
+    const transformedItem = transform(item);
+
+    result.filtered.push(item);
+    result.transformed.push(transformedItem);
+    result.total += transformedItem.value;
+
+    return result;
+  },
+  { filtered: [], transformed: [], total: 0 },
+);
+```
+
+When working with large datasets, each additional iteration through the array adds significant overhead. By using a single-pass approach with `reduce()`, you traverse the array just once while performing all necessary operations. This technique is particularly valuable for data processing tasks that involve multiple transformations and aggregations.
+
+The single-pass approach becomes even more valuable when working with server data that needs to be normalized, transformed, and aggregated before being used in your application. It reduces both CPU usage and memory overhead by eliminating intermediate array allocations.
+
+## Strategic Rendering
+
+React's rendering behavior is often the most significant performance bottleneck in complex applications. Understanding how to prevent unnecessary re-renders can dramatically improve your application's responsiveness.
+
+### Component Boundaries
+
+One of the most effective ways to prevent cascading re-renders is to create strategic component boundaries:
+
+```javascript
+// Problematic: Child re-renders when any parent state changes
+const ParentComponent = () => {
+  const [count, setCount] = useState(0);
+  const [unrelatedState, setUnrelatedState] = useState(false);
+
+  return (
+    <div>
+      <button onClick={() => setUnrelatedState(!unrelatedState)}>
+        Toggle unrelated state
+      </button>
+
+      {/* This will re-render even when only unrelatedState changes */}
+      <div>
+        <ComplexComponent count={count} />
+      </div>
+    </div>
+  );
+};
+
+// Improved: Isolated component only re-renders when its props change
+const ParentComponentImproved = () => {
+  const [count, setCount] = useState(0);
+  const [unrelatedState, setUnrelatedState] = useState(false);
+
+  return (
+    <div>
+      <button onClick={() => setUnrelatedState(!unrelatedState)}>
+        Toggle unrelated state
+      </button>
+
+      {/* Isolate the component that depends on count */}
+      <CountContainer count={count} />
+    </div>
+  );
+};
+
+// This only re-renders when count changes
+const CountContainer = React.memo(({ count }) => {
+  return <ComplexComponent count={count} />;
+});
+```
+
+Component boundaries are crucial for performance in large React applications. Each time a component re-renders, all of its children re-render as well, unless specifically optimized. By strategically breaking your UI into smaller components and using `React.memo()` at key boundaries, you can prevent entire subtrees from re-rendering unnecessarily.
+
+This becomes especially important for components that:
+
+- Have expensive rendering logic
+- Contain many child components
+- Display large amounts of data
+- Implement animations or visualizations
+
+Creating these boundaries doesn't just improve performance—it also leads to more maintainable code by enforcing better separation of concerns and more focused components.
+
+### Reference Preservation
+
+Maintaining stable references is crucial for preventing unnecessary re-renders:
+
+```javascript
+// Problematic: New object and function created on every render
+const Component = () => {
+  const options = { sortBy: "name", limit: 10 };
+  const handleClick = () => console.log("Clicked");
+
+  return <ChildComponent options={options} onClick={handleClick} />;
+};
+
+// Improved: Stable references with useMemo and useCallback
+const ComponentImproved = () => {
+  // Memoize options object to keep the reference stable unless dependencies change
+  const options = useMemo(
+    () => ({
+      sortBy: "name",
+      limit: 10,
+    }),
+    [],
+  );
+
+  // useCallback memoizes the function to avoid re-creating it on each render
+  const handleClick = useCallback(() => {
+    console.log("Clicked");
+  }, []); // empty dependency array ensures the function is memoized once
+
+  return <ChildComponent options={options} onClick={handleClick} />;
+};
+```
+
+In React, equality checks for objects and arrays are based on reference comparison, not by value. This means that even if two objects have identical properties, they are treated as distinct if they have different references. For example, `{id: 1} === {id: 1}` evaluates to `false` because each object is a separate instance, even though they contain the same data.
+
+When passing objects or functions as props to memoized components, creating new references on every render defeats the purpose of memoization. React will treat each render as a change, triggering unnecessary re-renders, even if the data itself hasn't changed.
+
+This issue affects several common patterns:
+
+- Passing object literals as props
+- Creating inline functions in render methods
+- Defining arrays inside components
+- Creating complex state transformations
+
+By using hooks like `useMemo` and `useCallback`, you can ensure that references remain stable across renders unless dependencies actually change. `useMemo` helps to memoize the creation of objects or arrays, while `useCallback` ensures that functions are not recreated unless their dependencies change. This allows React’s memoization mechanisms (such as `React.memo`) to work effectively, preventing unnecessary re-renders and improving performance throughout your component tree.
+
+## Advanced Memoization
+
+### Strategic useMemo Usage
+
+Rather than memoizing everything, focus on expensive calculations:
+
+```javascript
+// Overkill: Memoizing a simple operation
+const sum = useMemo(() => a + b, [a, b]);
+
+// Appropriate: Memoizing expensive calculations
+const sortedFilteredData = useMemo(() => {
+  return expensiveSort(filterByMultipleConditions(largeDataset, filters));
+}, [largeDataset, filters]);
+```
+
+When considering memoization, always evaluate the cost of the computation versus the cost of memoization itself. Memoization adds memory overhead and some performance cost for dependency comparisons. For simple operations, this overhead might exceed the benefits.
+
+Memoization is most valuable for:
+
+- Complex sorting or filtering operations
+- Data transformations with multiple steps
+- Calculations that involve iterating over large arrays
+- Derived values that might trigger re-renders when recalculated
+
+The key is to identify the expensive operations in your application and apply memoization selectively. I generally apply memoization when dealing with operations that are computationally expensive, such as mapping or filtering large datasets, or performing any operation that involves traversing through data and could require another O(n) operation.
+
+## Function and Event Optimization
+
+### Defining Functions Outside Components
+
+One of the simplest but effective ways to optimize your React components is to define functions that don't rely on component state or props outside of the component. This prevents these functions from being recreated on every render, improving performance in large applications.
+
+Consider the following example:
+
+```javascript
+// Avoid: Creating a new function on every render
+const Component = ({ data }) => {
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString();
+  };
+
+  return (
+    <div>
+      {data.map((item) => (
+        <div key={item.id}>{formatDate(item.date)}</div>
+      ))}
+    </div>
+  );
+};
+
+// Better: Define utility functions outside component scope
+const formatDate = (date) => {
+  return new Date(date).toLocaleDateString();
+};
+
+const ImprovedComponent = ({ data }) => {
+  return (
+    <div>
+      {data.map((item) => (
+        <div key={item.id}>{formatDate(item.date)}</div>
+      ))}
+    </div>
+  );
+};
+```
+
+When you define functions inside a component, React recreates those functions every time the component re-renders, even if the function’s logic doesn’t depend on any state or props. This can lead to unnecessary memory allocations and could slow down performance, especially in components that re-render frequently.
+
+Defining functions outside of components eliminates this issue, because the function is created once and remains the same across renders, which helps optimize performance by:
+
+- Reducing the number of new function instances: React no longer needs to recreate the function on every render.
+- Making the function reusable: By placing utility functions outside the component, they can be shared across multiple components, reducing code duplication.
+- Improving code readability: Keeping the component focused on rendering and separating logic into utility functions makes the component easier to read and maintain.
+- Easier to test: By moving logic outside of the component, the functions become easier to test in isolation, improving unit testing efficiency.
+
+Sometimes, you may need to define a function that depends on state or props within the component. In these cases, you can use the `useCallback` hook to ensure that the function is not recreated unless its dependencies change. This ensures that the function reference remains stable across renders, preventing unnecessary re-renders in child components that depend on this function.
+
+```javascript
+const Component = ({ itemId, onUpdate }) => {
+  const handleClick = useCallback(() => {
+    onUpdate(itemId);
+  }, [itemId, onUpdate]);
+
+  return <button onClick={handleClick}>Update</button>;
+};
+```
+
+When to use `useCallback`:
+
+- When you pass a function down to a child component and want to avoid triggering a re-render of the child if the function hasn’t changed.
+- When a function depends on specific props or state and you want to ensure it’s only recreated when those specific values change.
+- When the function is part of a dependency array of other hooks (like useEffect), and you want to prevent unnecessary re-execution.
+
+### Handling Event Handlers Efficiently
+
+Event handlers are another area where unnecessary re-creations can hurt performance. In React, handlers defined inline (inside JSX) are created every time the component re-renders, leading to a new reference being passed down to child components, which may cause unnecessary re-renders.
+
+Consider this example:
+
+```javascript
+// Avoid: Inline event handlers
+const Component = ({ onClickHandler }) => {
+  return <button onClick={() => onClickHandler("clicked")}>Click me</button>;
+};
+```
+
+Here, the inline function is re-created on every render. A better approach is to define the handler outside of the JSX to ensure the function reference remains stable across renders:
+
+```javascript
+// Better: Use a stable reference for event handlers
+const Component = ({ onClickHandler }) => {
+  const handleClick = useCallback(() => {
+    onClickHandler("clicked");
+  }, [onClickHandler]);
+
+  return <button onClick={handleClick}>Click me</button>;
+};
+```
+
+This ensures that `handleClick` maintains the same reference unless `onClickHandler` changes, reducing unnecessary re-renders in the child component.
+
+## Component Virtualization
+
+Virtualization is an important technique for handling large datasets in React applications. Rather than rendering all items at once, virtualization maintains a "window" of rendered elements that dynamically updates as the user scrolls.
+
+When implementing virtualization in React, you'll typically need to:
+
+- Track scroll position
+- Calculate which items should be visible
+- Render only those items
+- Position them correctly within the viewport
+
+Virtualization can provide dramatic performance improvements for lists, tables, grids, and even carousels. For detailed implementation examples, refer to my [Virtualizing React](https://renanleonel.com/posts/virtualizing-react/) article.
+
+## Data Fetching and Caching
+
+If you're not using React Query in your React applications yet, you probably should be. React Query provides an efficient, declarative approach to handling server state, managing data fetching, and optimizing network requests. Relying on `useEffect` for client-side data fetching might seem like a straightforward solution, but it's not the most effective, especially as your application grows in complexity.
+
+While `useEffect` can work for simple fetches, it lacks built-in caching, automatic background refetching, and the ability to handle errors and retries seamlessly. React Query abstracts these concerns away, providing a robust, highly customizable solution that not only simplifies data fetching but also optimizes performance with features like caching, pagination, and synchronization.
+
+By using React Query, you can drastically reduce boilerplate code, improve loading states, and focus more on building the features that matter, all while ensuring data consistency and efficiency.
+
+### Basic Implementation
+
+Here's how to implement React Query for optimal data fetching:
+
+```javascript
+import { useQuery, useMutation, useQueryClient } from "react-query";
+
+// Fetch data with automatic caching
+const UserProfile = ({ userId }) => {
+  const { data, isLoading, error } = useQuery(
+    ["user", userId],
+    () => fetchUserById(userId),
+    {
+      staleTime: 5 * 60 * 1000, // Data considered fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache retained for 30 minutes
+      refetchOnWindowFocus: false, // Don't refetch when tab regains focus
+    },
+  );
+
+  if (isLoading) return <Spinner />;
+  if (error) return <ErrorMessage error={error} />;
+
+  return <UserProfileContent user={data} />;
+};
+```
+
+### Advanced Caching Strategies
+
+React Query enables sophisticated caching patterns:
+
+```javascript
+// Optimistic updates
+const TodoList = () => {
+  const queryClient = useQueryClient();
+  const { data: todos } = useQuery("todos", fetchTodos);
+
+  const mutation = useMutation((newTodo) => createTodo(newTodo), {
+    // Optimistically update the UI
+    onMutate: async (newTodo) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries("todos");
+
+      // Snapshot the previous value
+      const previousTodos = queryClient.getQueryData("todos");
+
+      // Optimistically update to the new value
+      queryClient.setQueryData("todos", (old) => [
+        ...old,
+        { ...newTodo, id: Date.now() },
+      ]);
+
+      // Return a context with the previous value
+      return { previousTodos };
+    },
+    // If the mutation fails, use the context we returned above
+    onError: (err, newTodo, context) => {
+      queryClient.setQueryData("todos", context.previousTodos);
+    },
+    // Always refetch after error or success
+    onSettled: () => {
+      queryClient.invalidateQueries("todos");
+    },
+  });
+
+  return (
+    <div>
+      <TodoForm onSubmit={(todo) => mutation.mutate(todo)} />
+      <TodoItems items={todos} />
+    </div>
+  );
+};
+```
+
+The benefits of this approach include:
+
+- Instant UI updates for better user experience
+- Automatic background refetching to ensure data consistency
+- Graceful error handling with automatic rollback
+- Reduced server load by minimizing unnecessary requests
+
+### Prefetching and Background Updates
+
+React Query allows prefetching data before it's needed:
+
+```javascript
+const App = () => {
+  const queryClient = useQueryClient();
+
+  // Prefetch user data when the app loads
+  useEffect(() => {
+    queryClient.prefetchQuery(["user", "current"], fetchCurrentUser);
+  }, [queryClient]);
+
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route
+          path="/profile"
+          element={<Profile />}
+          onMouseEnter={() => {
+            // Prefetch when user hovers over link
+            queryClient.prefetchQuery(["userSettings"], fetchUserSettings);
+          }}
+        />
+      </Routes>
+    </Router>
+  );
+};
+```
+
+Prefetching strategies can dramatically improve perceived performance by loading data before the user explicitly requests it. This works especially well for:
+
+- Navigation paths that users are likely to follow
+- Data that's frequently accessed across different parts of the application
+- Resources that are slow to load but critical for functionality
+
+By strategically prefetching and caching data, you can create applications that feel instantaneous to users while minimizing server load and network traffic.
+
+## Debouncing and Throttling
+
+Controlling high-frequency events is essential for smooth user experiences. Debouncing and throttling are two techniques that can significantly improve performance when dealing with rapidly firing events.
+
+### Debouncing
+
+Debouncing ensures that a function is not invoked until a certain amount of time has passed since the last call, which is particularly useful in scenarios like search inputs, where you want to wait until the user stops typing before making an API call. Here's how you can implement debouncing with a 300ms delay:
+
+```javascript
+import { useState, useCallback } from "react";
+import { debounce } from "lodash";
+
+const SearchComponent = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [results, setResults] = useState([]);
+
+  const debouncedSearch = useCallback(
+    debounce(async (term) => {
+      const response = await fetchSearchResults(term);
+      setResults(response.data);
+    }, 300),
+    [],
+  );
+
+  const handleChange = (e) => {
+    setSearchTerm(e.target.value);
+    debouncedSearch(e.target.value);
+  };
+
+  return (
+    <div>
+      <input
+        type="text"
+        value={searchTerm}
+        onChange={handleChange}
+        placeholder="Search..."
+      />
+      <SearchResults results={results} />
+    </div>
+  );
+};
+```
+
+In this implementation, we use debounce to ensure the search function is only called 300ms after the user stops typing. If the user types quickly, the previous calls are canceled, and only the last call is executed, preventing unnecessary API requests.
+
+Debouncing is particularly useful for:
+
+- Search inputs, where you want to wait until the user stops typing before sending requests.
+- Form validation that should not be triggered on every keystroke.
+- Handling resize events or any other event that could fire repeatedly within a short period.
+
+### Throttling
+
+Throttling ensures that a function executes at a fixed interval, regardless of how often it's triggered. This is particularly useful for events that fire frequently, such as mouse movements, scrolling, or window resizing. By limiting the execution rate of a function, throttling helps reduce unnecessary calculations or re-renders, improving performance.
+
+For example, when tracking the mouse position on mousemove, the event fires many times per second. By using throttling, we ensure that the function runs only once every 200 milliseconds, preventing excessive updates while still providing near-real-time feedback.
+
+```javascript
+import { useState, useRef, useCallback } from "react";
+import { throttle } from "lodash";
+
+const MouseTracker = () => {
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const containerRef = useRef(null);
+
+  const handleMouseMove = useCallback(
+    throttle((event) => {
+      setMousePosition({ x: event.clientX, y: event.clientY });
+    }, 200),
+    [],
+  );
+
+  return (
+    <div
+      ref={containerRef}
+      className="mouse-tracker"
+      onMouseMove={handleMouseMove}
+      style={{ height: "100vh", border: "1px solid black" }}
+    >
+      <p>
+        Mouse Position: X: {mousePosition.x}, Y: {mousePosition.y}
+      </p>
+    </div>
+  );
+};
+```
+
+Throttling is ideal for:
+
+- Scroll events that trigger animations or calculations
+- Mousemove events for drag-and-drop or hover effects
+- Window resize handlers that update layouts
+- Tracking user activity at regular intervals
+
+## Suspense for Data Fetching
+
+React Suspense provides a powerful way to handle asynchronous data fetching while improving perceived performance and user experience. Instead of manually tracking loading states, Suspense allows you to declaratively define fallbacks for your components.
+
+When paired with a data-fetching library like React Query, Suspense makes handling asynchronous operations cleaner and more efficient.
+
+```javascript
+import { Suspense } from "react";
+import { useQuery } from "@tanstack/react-query";
+
+const fetchUser = async () => {
+  const res = await fetch("/api/user");
+  return res.json();
+};
+
+const UserProfile = () => {
+  const { data } = useQuery({ queryKey: ["user"], queryFn: fetchUser });
+
+  return <div>User: {data.name}</div>;
+};
+
+const App = () => (
+  <Suspense fallback={<div>Loading user...</div>}>
+    <UserProfile />
+  </Suspense>
+);
+```
+
+React Suspense simplifies state management by removing the need to manually track loading states. It enhances the loading experience by displaying a fallback UI while data is being fetched, preventing flickering and layout shifts caused by conditional rendering. Additionally, it helps improve perceived performance by ensuring that components load seamlessly without jarring transitions.
+
+Beyond performance, Suspense also improves code organization by keeping components focused on rendering logic rather than handling async states. This makes applications easier to maintain and scale. It is particularly useful when dealing with large datasets, streaming data, or preloading resources for a smoother user experience. As React continues to evolve, Suspense is set to become an essential tool for managing asynchronous operations efficiently.
+
+## Conclusion
+
+Optimizing React applications requires a multi-faceted approach, addressing everything from data structures to rendering strategies. The techniques covered in this guide provide a comprehensive toolkit for improving your application's performance:
+
+1. **Smart Data Manipulation**: Choose the right data structures and operation order to minimize processing time.
+2. **Strategic Rendering**: Create component boundaries and preserve references to prevent unnecessary re-renders.
+3. **Advanced Memoization**: Use React's optimization hooks strategically to avoid redundant calculations.
+4. **Function and Event Optimization**: Define functions efficiently and use event delegation to reduce overhead.
+5. **Component Virtualization**: Render only what's visible to handle large datasets efficiently.
+6. **Data Fetching and Caching**: Implement effective caching strategies with React Query to minimize network requests.
+7. **Debouncing and Throttling**: Control high-frequency events to maintain smooth user experiences.
+8. **Suspense for Data Fetching**: Use React's Suspense API to manage asynchronous data loading seamlessly.
+
+By applying these techniques selectively and measuring their impact, you can create React applications that remain responsive even as they grow in complexity. Remember that performance optimization is an iterative process—always measure before and after your changes to ensure they're having the desired effect.
