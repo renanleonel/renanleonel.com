@@ -14,6 +14,7 @@ export default defineConfig({
     tailwind(),
     mdx({
       optimize: true,
+      imageService: true,
     }),
     react(),
   ],
