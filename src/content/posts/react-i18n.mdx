@@ -1,0 +1,297 @@
+---
+title: "Building a Scalable i18n System in React"
+pubDate: 2025-05-02
+description: "A comprehensive guide to implementing internationalization in React applications using react-i18next with automatic namespace loading and cookie persistence"
+author: "Renan Leonel"
+---
+
+Internationalization (i18n) is critical for applications targeting a global audience. This guide explores a modular, scalable approach to i18n in React that automatically processes translation files and persists language preferences through cookies.
+
+By the end, you'll have a robust i18n system that automatically detects and loads translation namespaces, persists language preferences, separates translations by feature, and scales effortlessly as your application grows.
+
+You can find the source code for this tutorial on [GitHub](https://github.com/renanleonel/react-i18n). You can also find this article on [DEV](https://dev.to/rnnlnl/building-a-scalable-i18n-system-in-react-5hk).
+
+![Demo](/src/images/i18n.gif)
+
+## Table of Contents
+
+1. **[Core Concepts and Setup](#core-concepts-and-setup)**: Understanding i18n and project initialization
+2. **[Automatic Configuration](#automatic-configuration)**: The magic of auto-detecting translations
+3. **[Translation Organization and Usage](#translation-organization-and-usage)**: Structuring and implementing translations
+4. **[Extending Your i18n System](#extending-your-i18n-system)**: Adding languages and scaling
+
+## Core Concepts and Setup
+
+Internationalization involves adapting your application to different languages and regional preferences, including:
+
+- **Translation of text content**
+- **Formatting of dates, numbers, and currencies**
+- **Handling of pluralization**
+
+Our implementation focuses on modularity, automation, and persistence. Let's start by setting up our project:
+
+```bash
+pnpm add i18next react-i18next i18next-browser-languagedetector js-cookie @types/js-cookie
+```
+
+First, define a `Language` enum for type safety:
+
+```typescript
+// src/domain/enums/language.ts
+export enum Language {
+  EN = "en",
+  PT_BR = "pt-br",
+}
+```
+
+## Automatic Configuration
+
+The cornerstone of our scalable i18n system is the `config.ts` file that automatically discovers and loads translation files:
+
+```typescript
+// src/i18n/config.ts
+import i18n from "i18next";
+import Cookies from "js-cookie";
+import { initReactI18next } from "react-i18next";
+import { Language } from "@/domain/enums/language";
+import LanguageDetector from "i18next-browser-languagedetector";
+
+type Context = Record<string, { default: Record<string, string> }>;
+type Resources = Record<string, Record<string, Record<string, string>>>;
+
+function loadTranslationFiles() {
+  const resources: Resources = {};
+
+  Object.values(Language).forEach((lang) => {
+    resources[lang] = {};
+  });
+
+  const enContext: Context = import.meta.glob<{
+    default: Record<string, string>;
+  }>("./locales/en/**/*.json", { eager: true });
+
+  const ptBrContext: Context = import.meta.glob<{
+    default: Record<string, string>;
+  }>("./locales/pt-br/**/*.json", { eager: true });
+
+  const processContext = (context: Context, lang: Language) => {
+    Object.keys(context).forEach((path) => {
+      const filename = path.match(/\/([^/]+)\.json$/)?.[1];
+      const module = context[path];
+
+      resources[lang][filename] = "default" in module ? module.default : module;
+    });
+  };
+
+  processContext(enContext, Language.EN);
+  processContext(ptBrContext, Language.PT_BR);
+
+  return resources;
+}
+
+const resources = loadTranslationFiles();
+const cookieOptions = { expires: 365 };
+
+i18n
+  .use(LanguageDetector)
+  .use(initReactI18next)
+  .init({
+    resources,
+    fallbackLng: Language.EN,
+    detection: {
+      order: ["cookie", "navigator"],
+      lookupCookie: "i18next",
+    },
+    interpolation: { escapeValue: false },
+    ns: Object.keys(resources.en),
+  });
+
+export const changeLanguage = (lang: Language) => {
+  i18n.changeLanguage(lang);
+  Cookies.set("i18next", lang, cookieOptions);
+};
+
+export default i18n;
+```
+
+### Breaking Down the Configuration
+
+Let's understand how this configuration works:
+
+1. **Language Enum**:
+   First, we define a `Language` enum that contains all supported languages. This provides type safety throughout the application:
+
+   ```typescript
+   // src/domain/enums/language.ts
+   export enum Language {
+     EN = "en",
+     PT_BR = "pt-br",
+   }
+   ```
+
+2. **Resource Structure**:
+   We create TypeScript interfaces to ensure proper typing for our translation resources:
+
+   ```typescript
+   type Context = Record<string, { default: Record<string, string> }>;
+   type Resources = Record<string, Record<string, Record<string, string>>>;
+   ```
+
+3. **Automatic Resource Discovery**:
+   The `loadTranslationFiles` function is where the magic happens:
+
+   ```typescript
+   const enContext: Context = import.meta.glob<{
+     default: Record<string, string>;
+   }>("./locales/en/**/*.json", { eager: true });
+   ```
+
+   This uses Vite's glob import to find all JSON files within the locales directory for each language. The `eager: true` option ensures these are loaded synchronously.
+
+4. **Resource Processing**:
+   The `processContext` function extracts the namespace from each file path and organizes translations:
+
+   ```typescript
+   const processContext = (context: Context, lang: Language) => {
+     Object.keys(context).forEach((path) => {
+       const filename = path.match(/\/([^/]+)\.json$/)?.[1];
+       const module = context[path];
+
+       resources[lang][filename] =
+         "default" in module ? module.default : module;
+     });
+   };
+   ```
+
+   This extracts the filename (which becomes the namespace) using regex and adds the translations to the appropriate language and namespace.
+
+5. **Language Detection and Persistence**:
+
+   ```typescript
+   detection: {
+     order: ['cookie', 'navigator'],
+     lookupCookie: 'i18next',
+   }
+   ```
+
+   This configuration:
+
+   - Checks cookies first, then browser settings for language preference
+   - Uses a cookie named 'i18next' to store the preference
+
+6. **Language Change Helper**:
+
+   ```typescript
+   export const changeLanguage = (lang: Language) => {
+     i18n.changeLanguage(lang);
+     Cookies.set("i18next", lang, cookieOptions);
+   };
+   ```
+
+   This function provides a convenient way to change languages and persist the preference in a cookie that can be used across the application
+
+## Translation Organization and Usage
+
+With automatic configuration in place, organize translations by feature or context:
+
+```
+src/
+└── i18n/
+    ├── config.ts
+    └── locales/
+        ├── en/
+        │   ├── common.json
+        │   ├── index.json
+        ├── pt-br/
+        │   ├── common.json
+        │   ├── index.json
+```
+
+Example translation files:
+
+```json
+// src/i18n/locales/en/index.json
+{
+  "greeting": "Hello, World!",
+  "languageSelector": "Select a language",
+  "languages": {
+    "en": "English",
+    "pt-BR": "Portuguese"
+  }
+}
+```
+
+```json
+// src/i18n/locales/pt-BR/index.json
+{
+  "greeting": "Olá, Mundo!",
+  "languageSelector": "Selecione um idioma",
+  "languages": {
+    "en": "Inglês",
+    "pt-BR": "Português"
+  }
+}
+```
+
+The key advantage: any new JSON file added to these folders is automatically detected and processed without code changes.
+
+Using translations in components is straightforward:
+
+```tsx
+const App = () => {
+  const { t } = useTranslation();
+
+  return (
+    <div className="min-h-screen flex flex-col bg-[#101010]">
+      <Header />
+      <main className="flex-1 flex items-center justify-center p-6">
+        <p className="text-white text-2xl">{t("index:greeting")}</p>
+      </main>
+    </div>
+  );
+};
+```
+
+## Extending Your i18n System
+
+Adding a new language is simple:
+
+1. Update the `Language` enum:
+
+```typescript
+export enum Language {
+  EN = "en",
+  PT_BR = "pt-br",
+  ES = "es", // New language
+}
+```
+
+2. Modify the `config.ts` file:
+
+```typescript
+const esContext: Context = import.meta.glob<{
+  default: Record<string, string>;
+}>("./locales/es/**/*.json", { eager: true });
+
+processContext(esContext, Language.ES);
+```
+
+3. Create corresponding translation files in a new folder structure:
+
+```
+src/i18n/locales/es/
+├── common.json
+├── index.json
+```
+
+## Final Thoughts
+
+Our i18n implementation offers several key advantages:
+
+- **Modularity**: Translations organized by feature/context for easy maintenance
+- **Automation**: New files automatically detected and processed
+- **Type Safety**: Using TypeScript enums prevents errors
+- **Persistence**: User language preferences are remembered
+- **Scalability**: Adding new languages or namespaces is simple
+
+This approach works particularly well for growing applications, allowing team members to work on different features without conflicts. For more information, check out the documentation for [react-i18next](https://react.i18next.com/), [i18next](https://www.i18next.com/), and [js-cookie](https://github.com/js-cookie/js-cookie).
