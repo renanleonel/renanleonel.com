@@ -12,6 +12,9 @@ import Analytics from "@vercel/analytics/astro";
 import SpeedInsights from "@vercel/speed-insights/astro";
 
 import { ClientRouter } from "astro:transitions";
+
+const siteUrl = import.meta.env.SITE || Astro.url.origin;
+const ogImageUrl = new URL("/logo.png", siteUrl).href;
 ---
 
 <!doctype html>
@@ -23,14 +26,18 @@ import { ClientRouter } from "astro:transitions";
     <link rel="icon" type="image/svg+xml" href="/favicon.png" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content="renanleonel" />
-    <meta property="og:image" content={new URL("/logo.png", Astro.url).href} />
+    <meta property="og:url" content={Astro.url.href} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:type" content="image/png" />
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content="renanleonel" />
-    <meta name="twitter:image" content={new URL("/logo.png", Astro.url).href} />
+    <meta name="twitter:image" content={ogImageUrl} />
     <ClientRouter />
     <Analytics />
     <SpeedInsights />
