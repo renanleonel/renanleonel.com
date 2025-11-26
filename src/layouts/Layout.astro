@@ -20,9 +20,17 @@ import { ClientRouter } from "astro:transitions";
     <meta charset="UTF-8" />
     <meta name="description" content="renanleonel" />
     <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content="renanleonel" />
+    <meta property="og:image" content={new URL("/logo.png", Astro.url).href} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content="renanleonel" />
+    <meta name="twitter:image" content={new URL("/logo.png", Astro.url).href} />
     <ClientRouter />
     <Analytics />
     <SpeedInsights />
