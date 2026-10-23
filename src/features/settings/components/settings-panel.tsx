@@ -1,9 +1,11 @@
-import { BatteryCharging } from 'lucide-react';
+import type { CSSProperties } from 'react';
 
 import type { SystemPreferences } from '@/features/desktop/domain/models/system-preferences';
+import { SETTINGS_GROUP, SETTINGS_ROW } from '@/features/settings/domain/constants/settings-form';
 import type { SettingsControlId } from '@/features/settings/domain/enums/settings-control-id';
 import { SettingsSectionId } from '@/features/settings/domain/enums/settings-section-id';
 import type { SettingsPanel as SettingsPanelModel } from '@/features/settings/domain/models/settings-panel';
+import { MENU_SWITCH, SYSTEM_SLIDER } from '@/shared/domain/constants/liquid-glass';
 import { cn } from '@/shared/utils/cn';
 
 type SettingsPanelProps = {
@@ -16,6 +18,8 @@ type SettingsPanelProps = {
   updateSystemPreferences: (patch: Partial<SystemPreferences>) => void;
 };
 
+const BATTERY_LEVEL = 84;
+
 export function SettingsPanel({
   selectedSection,
   selectedPanel,
@@ -25,90 +29,81 @@ export function SettingsPanel({
   toggleSetting,
   updateSystemPreferences,
 }: SettingsPanelProps) {
+  const slider =
+    selectedSection === SettingsSectionId.SOUND
+      ? {
+          label: 'Output volume',
+          min: 0,
+          max: 100,
+          value: systemPreferences.volume,
+          update: (value: number) => updateSystemPreferences({ volume: value }),
+        }
+      : selectedSection === SettingsSectionId.DESKTOP
+        ? {
+            label: 'Size',
+            min: 36,
+            max: 64,
+            value: systemPreferences.dockSize,
+            update: (value: number) => updateSystemPreferences({ dockSize: value }),
+          }
+        : null;
+
   return (
     <>
       {selectedSection === SettingsSectionId.BATTERY ? (
-        <section
-          className={cn(
-            `battery-settings-summary${lowPower ? ' is-low-power' : ''}`,
-            '[&.battery-settings-summary]:flex [&.battery-settings-summary]:items-center [&.battery-settings-summary]:gap-3.25 [&.battery-settings-summary]:min-h-18',
-            '[&.battery-settings-summary_>_svg]:text-[#48a65d]',
-            '[&.battery-settings-summary.is-low-power_>_svg]:text-(--low-power-yellow) [&.battery-settings-summary.is-low-power_>_svg]:filter-[drop-shadow(0_0_5px_oklch(0.82_0.17_85/0.3))]',
-            '[&.battery-settings-summary_>_span]:flex [&.battery-settings-summary_>_span]:flex-col',
-            '[&.battery-settings-summary_>_span_>_strong]:text-[22px] [&.battery-settings-summary_>_span_>_strong]:[font-variant-numeric:tabular-nums]',
-            '[&.battery-settings-summary_small]:text-(--label-secondary)',
-          )}
-          aria-label='Battery status'
-        >
-          <BatteryCharging size={34} />
-          <span>
-            <strong>84%</strong>
-            <small>{lowPower ? 'Low Power Mode is active' : 'Power adapter connected'}</small>
-          </span>
+        <section className={SETTINGS_GROUP} aria-label='Battery status'>
+          <div className={SETTINGS_ROW}>
+            <span>
+              Battery Level
+              <small>{lowPower ? 'Low Power Mode is on' : 'Power Adapter'}</small>
+            </span>
+            <span className='flex items-center gap-2 tabular-nums'>
+              <span className='h-2.5 w-24 overflow-hidden rounded-full [background:oklch(0.2_0.01_250/0.12)] [.desktop--dark_&]:[background:oklch(1_0_0/0.14)]'>
+                <span
+                  className={cn(
+                    'block h-full rounded-full',
+                    lowPower ? 'bg-(--low-power-yellow)' : 'bg-[oklch(0.72_0.19_145)]',
+                  )}
+                  style={{ width: `${BATTERY_LEVEL}%` }}
+                />
+              </span>
+              {BATTERY_LEVEL}%
+            </span>
+          </div>
         </section>
       ) : null}
-      <section
-        className={cn(
-          'settings-list',
-          'settings-list--section',
-          '[&.settings-list]:p-0!',
-          '[&.settings-list_label]:min-h-15.5 [&.settings-list_label]:flex [&.settings-list_label]:items-center [&.settings-list_label]:justify-between [&.settings-list_label]:p-[10px_15px] [&.settings-list_label]:[border-bottom:1px_solid_var(--separator)]',
-          '[&.settings-list_.settings-row]:min-h-15.5 [&.settings-list_.settings-row]:flex [&.settings-list_.settings-row]:items-center [&.settings-list_.settings-row]:justify-between [&.settings-list_.settings-row]:p-[10px_15px] [&.settings-list_.settings-row]:[border-bottom:1px_solid_var(--separator)]',
-          '[&.settings-list_>_:last-child]:[border-bottom:0]',
-          '[&.settings-list_label_>_span]:min-w-0 [&.settings-list_label_>_span]:flex [&.settings-list_label_>_span]:flex-col',
-          '[&.settings-list_.settings-row_>_span:first-child]:min-w-0 [&.settings-list_.settings-row_>_span:first-child]:flex [&.settings-list_.settings-row_>_span:first-child]:flex-col',
-          '[&.settings-list_small]:text-(--label-secondary) [&.settings-list_small]:leading-[1.35]',
-          '[&.settings-list_input]:w-8.5 [&.settings-list_input]:accent-(--system-blue)',
-          '[&.settings-list_.accent-control:last-child]:[border-bottom:0]',
-          '[&.settings-list--section]:overflow-hidden',
-        )}
-        key={`${selectedSection}-settings`}
-      >
+      <section className={SETTINGS_GROUP} key={`${selectedSection}-settings`}>
         {selectedPanel.controls.map((control) => (
-          <label key={control.id}>
-            <span>
-              <strong>{control.title}</strong>
+          <label className={SETTINGS_ROW} key={control.id}>
+            <span className='min-w-0'>
+              {control.title}
               <small>{control.detail}</small>
             </span>
             <input
+              className={MENU_SWITCH}
               type='checkbox'
+              role='switch'
               checked={settingChecked(control.id)}
               onChange={() => toggleSetting(control.id)}
             />
           </label>
         ))}
-        {selectedSection === SettingsSectionId.SOUND ||
-        selectedSection === SettingsSectionId.DESKTOP ? (
-          <label className="settings-slider-row [&.settings-slider-row]:gap-5 [&.settings-slider-row_input[type='range']]:w-[min(180px,45%)]">
-            <span>
-              <strong>
-                {selectedSection === SettingsSectionId.SOUND ? 'Output volume' : 'Dock size'}
-              </strong>
-              <small>
-                {selectedSection === SettingsSectionId.SOUND
-                  ? 'Adjust the level used for interface audio.'
-                  : 'Resize application icons in the Dock.'}
-              </small>
-            </span>
+        {slider ? (
+          <label className={SETTINGS_ROW}>
+            <span>{slider.label}</span>
             <input
-              aria-label={
-                selectedSection === SettingsSectionId.SOUND ? 'Output volume' : 'Dock size'
+              className={cn(SYSTEM_SLIDER, 'w-[min(220px,50%)]')}
+              style={
+                {
+                  '--fill': `${((slider.value - slider.min) / (slider.max - slider.min)) * 100}%`,
+                } as CSSProperties
               }
+              aria-label={slider.label}
               type='range'
-              min={selectedSection === SettingsSectionId.SOUND ? 0 : 36}
-              max={selectedSection === SettingsSectionId.SOUND ? 100 : 64}
-              value={
-                selectedSection === SettingsSectionId.SOUND
-                  ? systemPreferences.volume
-                  : systemPreferences.dockSize
-              }
-              onChange={(event) =>
-                updateSystemPreferences(
-                  selectedSection === SettingsSectionId.SOUND
-                    ? { volume: Number(event.target.value) }
-                    : { dockSize: Number(event.target.value) },
-                )
-              }
+              min={slider.min}
+              max={slider.max}
+              value={slider.value}
+              onChange={(event) => slider.update(Number(event.target.value))}
             />
           </label>
         ) : null}

@@ -23,7 +23,6 @@ export function FinderShareMenu({
         'finder-toolbar-popover',
         'finder-share-popover',
         ...FINDER_TOOLBAR_POPOVER_CLASSES,
-        '[&.finder-share-popover]:right-52.5',
       )}
       role='menu'
       aria-label='Share Portfolio'

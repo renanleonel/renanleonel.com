@@ -9,7 +9,7 @@ pnpm install
 pnpm dev
 ```
 
-`package.json` declares pnpm 10.28.2. Vite prints the local development URL. A normal first load shows the boot screen for about two seconds, followed by login.
+`package.json` declares pnpm 10.28.2. Vite prints the local development URL. A normal first load opens directly on the lock screen; Restart and Power On play the two-second boot screen first.
 
 Generated paths are ignored:
 
@@ -102,6 +102,10 @@ Report:
 - browser paths exercised;
 - any manual checks not completed;
 - known placeholder or intentionally inert behavior left unchanged.
+
+## Server data
+
+`/api/github-repositories` is the only server endpoint (a Vercel Function in `api/`). Locally, `pnpm dev` and `pnpm preview` serve it through a Vite plugin, so no Vercel CLI is needed. Set `GITHUB_TOKEN` in the Vercel project (or your shell) to lift GitHub's 60-requests-per-hour unauthenticated limit; it is optional. Restart the dev server after changing `vite.config.ts` or `server/`.
 
 ## Deployment analytics
 

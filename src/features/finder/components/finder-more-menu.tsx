@@ -22,7 +22,6 @@ export function FinderMoreMenu({
         'finder-toolbar-popover',
         'finder-more-popover',
         ...FINDER_TOOLBAR_POPOVER_CLASSES,
-        '[&.finder-more-popover]:right-43.5',
       )}
       role='menu'
       aria-label='Finder actions'

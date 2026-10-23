@@ -1,13 +1,33 @@
+const PETALS = [
+  { angle: 0, fill: '#ffb21d' },
+  { angle: 45, fill: '#f6e13a' },
+  { angle: 90, fill: '#9bd94a' },
+  { angle: 135, fill: '#35c6a8' },
+  { angle: 180, fill: '#3d9df5' },
+  { angle: 225, fill: '#8b6cf0' },
+  { angle: 270, fill: '#e65ab4' },
+  { angle: 315, fill: '#ff5a48' },
+];
+
+/** Photos: the eight translucent petals of Apple's pinwheel flower. */
 export function PhotosAppGlyph() {
   return (
-    <svg
-      className='photos-app-glyph [&.photos-app-glyph]:w-[86%] [&.photos-app-glyph]:h-[86%]'
-      viewBox='0 0 48 48'
-      aria-hidden='true'
-    >
-      <rect x='9' y='10' width='30' height='28' rx='6' fill='white' fillOpacity='0.94' />
-      <circle cx='30.5' cy='18.5' r='3.5' fill='currentColor' fillOpacity='0.72' />
-      <path d='m13 33 8.2-8.7 5.3 5.1 3.4-3.2L35 33z' fill='currentColor' fillOpacity='0.86' />
+    <svg className='size-[84%]' viewBox='0 0 48 48' aria-hidden='true'>
+      <g style={{ mixBlendMode: 'multiply' }}>
+        {PETALS.map((petal) => (
+          <rect
+            key={petal.angle}
+            x='19.2'
+            y='4.5'
+            width='9.6'
+            height='19.5'
+            rx='4.8'
+            fill={petal.fill}
+            fillOpacity='0.88'
+            transform={`rotate(${petal.angle} 24 24)`}
+          />
+        ))}
+      </g>
     </svg>
   );
 }

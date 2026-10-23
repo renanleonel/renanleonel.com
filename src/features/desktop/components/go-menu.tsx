@@ -6,7 +6,7 @@ type GoMenuProps = { openFinderSection: (section: FinderSection) => void };
 
 export function GoMenu({ openFinderSection }: GoMenuProps) {
   return (
-    <SystemMenu className='go-menu [&.go-menu]:left-54.5'>
+    <SystemMenu className='go-menu'>
       <MenuCommand shortcut='⌘[' disabled>
         Back
       </MenuCommand>

@@ -22,7 +22,7 @@ The project is a client-only React application. There is no backend or authentic
 | Application | What it does |
 | --- | --- |
 | Finder | Presents the portfolio as a file system, with searchable sections, view controls, preview/status/sidebar options, link sharing, and entries that open other apps. |
-| Safari | Renders a portfolio page with placeholder project stories and contact navigation. |
+| Safari | Renders the portfolio page with the most recently updated GitHub repositories (server-fetched, CDN-cached) and recent dev.to posts. |
 | Messages | Searches and switches between local conversations, and sends typed replies locally. It does not send data to a server. |
 | Photos | Displays a generated gallery of named visual tiles. |
 | Notes | Shows authored notes and a Today checklist shared with the desktop widget; task completion persists locally. |
@@ -58,7 +58,7 @@ pnpm install
 pnpm dev
 ```
 
-Open the local URL printed by Vite. The app starts with a two-second boot sequence, then shows the login screen.
+Open the local URL printed by Vite. The app opens on the lock screen; Restart and Power On play a two-second boot sequence first.
 
 ### Available commands
 
@@ -81,9 +81,10 @@ src/main.tsx
       -> DesktopProvider                    session, appearance, interactions
       -> FinderProvider                     Finder section and preferences
       -> NotesProvider                      selected note and task completion
-      -> DesktopCompositionContainer        cross-feature orchestration
-          -> ManagedAppWindowContainer      window frame + application content
-              -> AppContentContainer        AppId-to-feature mapping and lazy loading
+      -> DesktopCompositionContainer        lock, boot, and power screens; desktop shell
+          -> DesktopSessionContainer        lazy: cross-feature orchestration after login
+              -> ManagedAppWindowContainer  window frame + application content
+                  -> AppContentContainer    AppId-to-feature mapping and lazy loading
 ```
 
 Source code follows a feature-first dependency direction:
@@ -100,7 +101,7 @@ src/shared    stable primitives used by more than one feature
 
 `src/app` is the only layer that composes feature UIs. Each feature groups the roles it actually needs: `components`, `containers`, `contexts`, `hooks`, `adapters`, `domain`, and `utils`. Shared application identity and initial window metadata live in `src/shared/domain/constants/application-registry.ts`. Vercel Web Analytics is mounted once at the application entry point in `src/main.tsx`, outside the feature graph.
 
-Finder is eagerly imported because it is the initial window. Safari, Messages, Photos, Notes, Terminal, Settings, and About are loaded through `React.lazy` and rendered under `Suspense` when requested.
+The lock screen is painted statically by `index.html` and the entry chunk renders only the lock, boot, and power screens. The logged-in desktop is a lazily loaded chunk prefetched during the lock screen; Finder ships with it because it is the initial window. Safari, Messages, Photos, Notes, Terminal, Settings, and About are loaded through `React.lazy` and rendered under `Suspense` when requested.
 
 Read [`docs/architecture/overview.md`](docs/architecture/overview.md) for the full runtime map and [`docs/architecture/project-structure.md`](docs/architecture/project-structure.md) for placement and dependency rules.
 
@@ -133,8 +134,8 @@ The current experience is production-shaped, but much of the personal content is
 | Content | Source |
 | --- | --- |
 | Product purpose and positioning | [`PRODUCT.md`](PRODUCT.md) |
-| Visual direction and design tokens | [`DESIGN.md`](DESIGN.md), `index.html`, `src/styles.css`, and `src/features/desktop/components/desktop-shell.tsx` for dark-theme overrides |
-| Safari projects and hero/contact copy | `src/features/safari/domain/constants/portfolio-projects.ts` and `src/features/safari/components/safari-content.tsx` |
+| Visual direction and design tokens | [`DESIGN.md`](DESIGN.md), `src/styles.css`, `src/shared/domain/constants/liquid-glass.ts`, and `src/features/desktop/components/desktop-shell.tsx` for dark-theme overrides |
+| Safari repositories and page copy | `src/features/safari/domain/selectors/select-recent-repositories.ts` (selection rules) and `src/features/safari/components/safari-page.tsx` |
 | Finder portfolio hierarchy | `src/features/finder/domain/constants/finder-sections.ts` |
 | Notes copy and Today tasks | `src/features/notes/domain/constants/notes.ts` and `today-tasks.ts` |
 | Messages contacts and conversation | `src/features/messages/domain/constants/` |

@@ -21,7 +21,9 @@ Features do not compose other feature UIs. Cross-feature actions such as opening
 
 ## Entry and provider tree
 
-`src/main.tsx` imports the Inter variable font and global styles, mounts React in strict mode, renders `App`, and mounts the Vercel Web Analytics component once beside it. Analytics is a deployment integration, not a feature dependency or provider.
+`index.html` paints a static copy of the lock screen before any JavaScript runs. In production a small inline loader (the `deferAppAssetsUntilFirstPaint` plugin in `vite.config.ts`) requests the entry script, the main stylesheet, the wallpaper, and an Inter preload only after that first contentful paint, so the HTML is the only dependency of the first and largest paint.
+
+`src/main.tsx` imports global styles, waits for the loader's stylesheet (`shared/adapters/stylesheets-ready.ts`) so unstyled markup never replaces the static screen, mounts React in strict mode, renders `App`, and mounts the Vercel Web Analytics and Speed Insights components once beside it. Analytics is a deployment integration, not a feature dependency or provider.
 
 `src/app/app.tsx` establishes the long-lived provider order:
 
@@ -37,20 +39,16 @@ Provider order matters because the composition container reads all four domains.
 
 ## Composition layer
 
-`DesktopCompositionContainer` is the main integration seam. It:
+The composition layer is split in two so the lock screen does not wait for the desktop:
 
-- selects state and actions from the window, desktop, Finder, and Notes providers;
-- owns the currently selected Settings section;
-- translates Dock utilities into application actions;
-- coordinates boot/login/power screens, overlays, system dialogs, widgets, desktop files, menu bar, Dock, and window instances;
-- maps system-menu commands to the active window;
-- passes cross-feature callbacks down instead of importing feature UI into another feature.
+- `DesktopCompositionContainer` (entry chunk) renders the boot, sleep, and shutdown screens, the desktop shell with the accent variables, the lock screen, and the desktop click that reveals the wallpaper. It starts fetching the session chunk on mount and renders it in the same commit as login, keeping the lock screen up if the chunk has not arrived yet.
+- `DesktopSessionContainer` (lazy chunk, rendered after login) selects state from the window, desktop, Finder, and Notes providers; owns the selected Settings section; translates Dock utilities into application actions; coordinates overlays, system dialogs, widgets, desktop files, menu bar, Dock, and window instances; maps system-menu commands to the active window; and passes cross-feature callbacks down instead of importing feature UI into another feature.
 
 Each `WindowState` is rendered by `ManagedAppWindowContainer`. That container combines the application-agnostic `AppWindow` frame with `AppContentContainer`, which selects content by `AppId`.
 
 ## Application loading
 
-Finder is imported eagerly because `INITIAL_WINDOW` always opens Finder at startup. The other application surfaces are split with `React.lazy` in `src/app/containers/app-content-container.tsx`:
+Finder is imported eagerly by the session chunk because `INITIAL_WINDOW` always opens Finder after login. The other application surfaces are split with `React.lazy` in `src/app/containers/app-content-container.tsx`:
 
 - About
 - Messages
@@ -90,7 +88,7 @@ DesktopProvider appearance state/actions
           -> SettingsProvider and SettingsContent
 ```
 
-The Desktop feature owns persisted system preferences and appearance state. The Settings feature owns its navigation, accent-picker disclosure, and simulated panel toggles. `src/app` connects them. Settings currently imports Desktop-owned preference types for its prop contracts; this narrow domain dependency is tolerated but must not grow into UI coupling.
+The Desktop feature owns persisted system preferences and appearance state. The Settings feature owns its navigation (sidebar search and back/forward history) and simulated panel toggles. `src/app` connects them. Settings currently imports Desktop-owned preference types for its prop contracts; this narrow domain dependency is tolerated but must not grow into UI coupling.
 
 ## Shared application metadata
 
@@ -107,7 +105,7 @@ This separation prevents the pure registry from importing React or presentation-
 
 ## Styling and compilation
 
-Tailwind CSS 4 is compiled through `@tailwindcss/vite`. Global keyframes and base rules live in `src/styles.css`; system variables and document-level defaults are declared on the root elements in `index.html`; feature styles are primarily colocated as Tailwind class strings.
+Tailwind CSS 4 is compiled through `@tailwindcss/vite`. Global keyframes, system variables, document defaults, and resets live in the `base` layer of `src/styles.css`, so any utility wins over them; `index.html` keeps only the inline styles of the static lock screen and the Inter `@font-face`; feature styles are primarily colocated as Tailwind class strings. Shared Liquid Glass materials (windows, sidebars, toolbars, menus, widgets, switches) are class-string constants in `src/shared/domain/constants/liquid-glass.ts`.
 
 React Compiler is explicitly enabled in `vite.config.ts` through the React compiler preset and Rolldown Babel plugin. The code should therefore rely on normal value derivation and component boundaries before adding manual `memo`, `useMemo`, or `useCallback`.
 

@@ -19,8 +19,8 @@ type FinderContainerProps = {
 };
 
 export function FinderContainer({ openApp }: FinderContainerProps) {
-  const { preferences, section } = useFinderState();
-  const { setSection, updatePreferences } = useFinderActions();
+  const { preferences, section, canGoBack, canGoForward } = useFinderState();
+  const { setSection, goBack, goForward, updatePreferences } = useFinderActions();
   const [query, setQuery] = useState('');
   const [toolbarMenu, setToolbarMenu] = useState<FinderToolbarMenu | null>(null);
   const [shareStatus, setShareStatus] = useState('');
@@ -47,11 +47,15 @@ export function FinderContainer({ openApp }: FinderContainerProps) {
       document.removeEventListener('pointerdown', closeToolbarMenuOnOutsidePointerDown, true);
   }, [toolbarMenu]);
 
-  const selectSection = (nextSection: FinderSection) => {
-    setSection(nextSection);
+  const resetLocationState = () => {
     setQuery('');
     setToolbarMenu(null);
     setSelectedItem(null);
+  };
+
+  const selectSection = (nextSection: FinderSection) => {
+    setSection(nextSection);
+    resetLocationState();
   };
 
   const shareInMessages = () => {
@@ -75,6 +79,17 @@ export function FinderContainer({ openApp }: FinderContainerProps) {
           toolbarMenu={toolbarMenu}
           shareStatus={shareStatus}
           preferences={preferences}
+          sidebarVisible={preferences.showSidebar}
+          canGoBack={canGoBack}
+          canGoForward={canGoForward}
+          onGoBack={() => {
+            goBack();
+            resetLocationState();
+          }}
+          onGoForward={() => {
+            goForward();
+            resetLocationState();
+          }}
           onQueryChange={setQuery}
           onToggleShareMenu={() => {
             setShareStatus('');

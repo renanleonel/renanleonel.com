@@ -5,8 +5,9 @@ import type { SettingsSectionId } from '@/features/settings/domain/enums/setting
 
 export type SettingsStateContextValue = {
   selectedSection: SettingsSectionId;
-  accentOpen: boolean;
   toggleValues: Readonly<Record<SettingsControlId, boolean>>;
+  canGoBack: boolean;
+  canGoForward: boolean;
 };
 
 export const SettingsStateContext = createContext<SettingsStateContextValue | undefined>(undefined);

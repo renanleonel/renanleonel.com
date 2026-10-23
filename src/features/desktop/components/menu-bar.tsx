@@ -1,5 +1,6 @@
 import { Moon, Search, Wifi } from 'lucide-react';
 
+import { anchorMenuToTitle } from '@/features/desktop/adapters/menu-anchor';
 import { AppleMark } from '@/features/desktop/components/apple-mark';
 import { BatteryStatusGlyph } from '@/features/desktop/components/battery-status-glyph';
 import { ControlCenterGlyph } from '@/features/desktop/components/control-center-glyph';
@@ -66,7 +67,11 @@ export function MenuBar({
           type='button'
           className='brand-button [&.brand-button_svg]:w-4.25 [&.brand-button_svg]:h-4.25 [&.brand-button_svg]:fill-[currentColor] [&.brand-button_svg]:transform-[translateY(-0.2px)]'
           aria-label='Portfolio menu'
-          onClick={() => onOverlay(overlay === OverlayId.APPLE ? null : OverlayId.APPLE)}
+          aria-expanded={overlay === OverlayId.APPLE}
+          onClick={(event) => {
+            anchorMenuToTitle(event.currentTarget);
+            onOverlay(overlay === OverlayId.APPLE ? null : OverlayId.APPLE);
+          }}
         >
           <AppleMark />
         </button>
@@ -80,7 +85,10 @@ export function MenuBar({
               type='button'
               key={menu}
               aria-expanded={overlay === target}
-              onClick={() => onOverlay(overlay === target ? null : target)}
+              onClick={(event) => {
+                anchorMenuToTitle(event.currentTarget);
+                onOverlay(overlay === target ? null : target);
+              }}
             >
               {menu}
             </button>
@@ -105,7 +113,10 @@ export function MenuBar({
           type='button'
           aria-label='Wi-Fi'
           aria-expanded={overlay === OverlayId.WIFI}
-          onClick={() => onOverlay(overlay === OverlayId.WIFI ? null : OverlayId.WIFI)}
+          onClick={(event) => {
+            anchorMenuToTitle(event.currentTarget);
+            onOverlay(overlay === OverlayId.WIFI ? null : OverlayId.WIFI);
+          }}
         >
           <Wifi size={15} strokeWidth={1.8} />
         </button>
@@ -114,13 +125,17 @@ export function MenuBar({
           className={cn(`battery-status${lowPower ? ' is-low-power' : ''}`)}
           aria-label='Battery, 84 percent'
           aria-expanded={overlay === OverlayId.BATTERY}
-          onClick={() => onOverlay(overlay === OverlayId.BATTERY ? null : OverlayId.BATTERY)}
+          onClick={(event) => {
+            anchorMenuToTitle(event.currentTarget);
+            onOverlay(overlay === OverlayId.BATTERY ? null : OverlayId.BATTERY);
+          }}
         >
           <BatteryStatusGlyph />
         </button>
         <button
           type='button'
           aria-label='Spotlight'
+          aria-expanded={overlay === OverlayId.SPOTLIGHT}
           onClick={() => onOverlay(overlay === OverlayId.SPOTLIGHT ? null : OverlayId.SPOTLIGHT)}
         >
           <Search size={15} />
@@ -137,6 +152,7 @@ export function MenuBar({
         <button
           type='button'
           aria-label='Control Center'
+          aria-expanded={overlay === OverlayId.CONTROL}
           onClick={() => onOverlay(overlay === OverlayId.CONTROL ? null : OverlayId.CONTROL)}
         >
           <ControlCenterGlyph />
@@ -145,6 +161,7 @@ export function MenuBar({
           type='button'
           className='menu-clock'
           aria-label='Notifications'
+          aria-expanded={overlay === OverlayId.NOTIFICATIONS}
           onClick={() =>
             onOverlay(overlay === OverlayId.NOTIFICATIONS ? null : OverlayId.NOTIFICATIONS)
           }

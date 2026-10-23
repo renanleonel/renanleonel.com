@@ -22,7 +22,7 @@ export function WindowMenu({
   bringToFront,
 }: WindowMenuProps) {
   return (
-    <SystemMenu className='window-menu [&.window-menu]:left-77.5 [&.window-menu]:w-66.25'>
+    <SystemMenu className='window-menu w-66.25! [--menu-width:265px]'>
       <MenuCommand shortcut='⌘M' disabled={!window} onClick={minimize}>
         Minimize
       </MenuCommand>

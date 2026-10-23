@@ -4,4 +4,6 @@ import type { FinderPreferences } from '@/features/finder/domain/models/finder-p
 export type FinderState = {
   preferences: FinderPreferences;
   section: FinderSection;
+  canGoBack: boolean;
+  canGoForward: boolean;
 };

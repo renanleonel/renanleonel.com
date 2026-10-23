@@ -32,8 +32,11 @@ src/
 
 At the repository root:
 
-- `index.html` defines the document shell, root accessibility/motion utilities, and global system CSS variables.
-- `vite.config.ts` configures React, React Compiler, Tailwind, and the `@/` alias.
+- `api/` holds Vercel Functions. `api/github-repositories.ts` is the only server-rendered data in the app; everything else is the static build.
+- `server/` holds Node-only code shared by those functions and the Vite build: the GitHub loader and the plugin that bakes its build-time snapshot (`virtual:github-repositories-snapshot`, typed in `src/virtual-modules.d.ts`) and serves `/api/*` under `pnpm dev` and `pnpm preview`. These files use relative `.js` imports because neither bundler resolves the `@/` alias, so anything they import from `src` must use type-only `@/` imports.
+
+- `index.html` defines the document shell, the static first-paint lock screen, the Inter `@font-face`, and root motion utilities. System CSS variables live in `src/styles.css`.
+- `vite.config.ts` configures React, React Compiler, Tailwind, the `@/` alias, the first-paint asset loader, and the GitHub repositories plugin.
 - `tsconfig.app.json` type-checks browser source; `tsconfig.node.json` type-checks Vite configuration.
 - `PRODUCT.md` and `DESIGN.md` define product and visual intent.
 - `AGENTS.md` routes agent work to the modular docs under `docs/`.
@@ -54,7 +57,8 @@ This is the sole cross-feature UI composition layer. It may import any feature c
 Current responsibilities are deliberately small:
 
 - `app.tsx` establishes provider order.
-- `desktop-composition-container.tsx` coordinates desktop-wide workflows and cross-feature actions.
+- `desktop-composition-container.tsx` renders the lock, boot, and power screens and the desktop shell, and lazy-loads the session.
+- `desktop-session-container.tsx` coordinates desktop-wide workflows and cross-feature actions after login.
 - `managed-app-window-container.tsx` combines a window frame with application content.
 - `app-content-container.tsx` maps every `AppId` to a feature UI and owns lazy-loading boundaries.
 - `settings-content-container.tsx` bridges Desktop-owned preferences into the Settings feature.
@@ -166,7 +170,7 @@ Prefer a feature-owned callback passed through `src/app` when the behavior is cr
 
 - Static public assets belong in `public/` and are referenced by their root URL.
 - Imported assets that need bundling would belong under the owning source feature.
-- Document and root variables belong in `index.html` only when they apply globally from first paint.
+- Document and root variables belong in the `base` layer of `src/styles.css`; `index.html` holds only what the static lock screen needs before the stylesheet loads.
 - The Tailwind import, wallpaper rule, and global keyframes belong in `src/styles.css`.
 - Dark-mode token overrides stay with the activating shell in `desktop/components/desktop-shell.tsx`.
 - Feature-specific styling stays with the owning component as Tailwind class strings.

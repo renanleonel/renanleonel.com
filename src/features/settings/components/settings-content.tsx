@@ -1,3 +1,5 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
 import { AppearanceSettings } from '@/features/settings/components/appearance-settings';
 import { SettingsHeading } from '@/features/settings/components/settings-heading';
 import { SettingsPanel } from '@/features/settings/components/settings-panel';
@@ -11,7 +13,14 @@ import { useSettingsActions } from '@/features/settings/hooks/use-settings-actio
 import { useSettingsState } from '@/features/settings/hooks/use-settings-state';
 import type { AccentColorId } from '@/features/desktop/domain/enums/accent-color-id';
 import type { SystemPreferences } from '@/features/desktop/domain/models/system-preferences';
+import {
+  GLASS_TOOLBAR_GROUP,
+  TOOLBAR_BUTTON,
+  WINDOW_TOOLBAR,
+} from '@/shared/domain/constants/liquid-glass';
 import { cn } from '@/shared/utils/cn';
+
+const APPEARANCE_DESCRIPTION = 'Choose how windows and controls look across the portfolio.';
 
 type SettingsContentProps = {
   dark: boolean;
@@ -34,9 +43,8 @@ export function SettingsContent({
   systemPreferences,
   updateSystemPreferences,
 }: SettingsContentProps) {
-  const { selectedSection, accentOpen, toggleValues } = useSettingsState();
-  const { selectSection, toggleAccentPicker, closeAccentPicker, toggleLocalSetting } =
-    useSettingsActions();
+  const { selectedSection, toggleValues, canGoBack, canGoForward } = useSettingsState();
+  const { selectSection, goBack, goForward, toggleLocalSetting } = useSettingsActions();
   const selected =
     SETTINGS_SECTIONS.find((section) => section.id === selectedSection) ?? SETTINGS_SECTIONS[0];
   const selectedPanel = SETTINGS_PANEL_COPY[selectedSection as SettingsPanelSectionId];
@@ -61,48 +69,66 @@ export function SettingsContent({
   };
 
   return (
-    <div
-      className={cn(
-        'settings-app',
-        '[&.settings-app]:h-full [&.settings-app]:flex [&.settings-app]:text-[oklch(0.22_0.01_250)] [&.settings-app]:[background:var(--material-content)]',
-        '[&.settings-app_>_aside]:w-56.25 [&.settings-app_>_aside]:flex-[0_0_225px] [&.settings-app_>_aside]:p-[10px_8px] [&.settings-app_>_aside]:[background:linear-gradient(135deg,oklch(1_0_0/0.24),transparent_52%),var(--material-sidebar)] [&.settings-app_>_aside]:overflow-auto [&.settings-app_>_aside]:[backdrop-filter:blur(32px)_saturate(1.35)] [&.settings-app_>_aside]:[-webkit-backdrop-filter:blur(32px)_saturate(1.35)]',
-        '[&.settings-app_aside_nav]:flex [&.settings-app_aside_nav]:flex-col [&.settings-app_aside_nav]:gap-0.5',
-        '[&.settings-app_aside_button]:w-full [&.settings-app_aside_button]:h-8 [&.settings-app_aside_button]:flex [&.settings-app_aside_button]:items-center [&.settings-app_aside_button]:gap-2 [&.settings-app_aside_button]:p-[0_8px] [&.settings-app_aside_button]:[border:0] [&.settings-app_aside_button]:rounded-[7px] [&.settings-app_aside_button]:[background:transparent] [&.settings-app_aside_button]:text-left',
-        '[&.settings-app_aside_button.selected]:text-[white] [&.settings-app_aside_button.selected]:[background:var(--system-blue-deep)]',
-        '[&.settings-app_aside_button.selected_.settings-sidebar-icon]:[background:oklch(1_0_0/0.22)] [&.settings-app_aside_button.selected_.settings-sidebar-icon]:[box-shadow:inset_0_0_0_1px_oklch(1_0_0/0.18)]',
-        '[&.settings-app_main]:flex-1 [&.settings-app_main]:p-[24px_28px] [&.settings-app_main]:overflow-auto [&.settings-app_main]:[background:var(--material-content)]',
-        '[&.settings-app_h1]:m-0 [&.settings-app_h1]:text-[24px]',
-        '[&.settings-app_section]:mb-4.5 [&.settings-app_section]:p-4 [&.settings-app_section]:rounded-xl [&.settings-app_section]:[background:var(--material-raised)] [&.settings-app_section]:[box-shadow:0_1px_3px_oklch(0.16_0.02_250/0.12),inset_0_0_0_1px_oklch(0.3_0.01_250/0.06)]',
-        '[&.settings-app_section_h2]:m-[0_0_14px] [&.settings-app_section_h2]:text-[15px]',
-        'max-[900px]:[&.settings-app_>_aside]:w-41.25 max-[900px]:[&.settings-app_>_aside]:basis-41.25',
-        'max-[600px]:[&.settings-app_>_aside]:hidden',
-      )}
-    >
+    <div className='settings-app h-full flex text-(--label-primary) [background:var(--material-content)]'>
       <SettingsSidebar selectedSection={selectedSection} selectSection={selectSection} />
-      <main>
-        <SettingsHeading selected={selected} description={selectedPanel?.description} />
-        {selectedSection === SettingsSectionId.APPEARANCE ? (
-          <AppearanceSettings
-            dark={dark}
-            setDark={setDark}
-            accentColor={accentColor}
-            setAccentColor={setAccentColor}
-            accentOpen={accentOpen}
-            toggleAccentPicker={toggleAccentPicker}
-            closeAccentPicker={closeAccentPicker}
-          />
-        ) : (
-          <SettingsPanel
-            selectedSection={selectedSection}
-            selectedPanel={selectedPanel}
-            lowPower={lowPower}
-            systemPreferences={systemPreferences}
-            settingChecked={settingChecked}
-            toggleSetting={toggleSetting}
-            updateSystemPreferences={updateSystemPreferences}
-          />
-        )}
-      </main>
+      <div className='min-w-0 flex-1 flex flex-col'>
+        <div
+          className={cn(WINDOW_TOOLBAR, 'touch-none gap-3 pl-3 pr-5 max-[600px]:pl-24')}
+          data-window-drag-region
+        >
+          <span className={cn(GLASS_TOOLBAR_GROUP, 'px-0.5')}>
+            <button
+              type='button'
+              className={TOOLBAR_BUTTON}
+              aria-label='Back'
+              disabled={!canGoBack}
+              onClick={goBack}
+            >
+              <ChevronLeft size={18} strokeWidth={2} />
+            </button>
+            <button
+              type='button'
+              className={TOOLBAR_BUTTON}
+              aria-label='Forward'
+              disabled={!canGoForward}
+              onClick={goForward}
+            >
+              <ChevronRight size={18} strokeWidth={2} />
+            </button>
+          </span>
+          <h2 className='m-0 truncate text-[15px] font-bold tracking-[-0.01em]'>{selected.label}</h2>
+        </div>
+        <main className='min-h-0 flex-1 overflow-auto px-5 pt-1 pb-6'>
+          <div className='mx-auto max-w-150'>
+            <SettingsHeading
+              selected={selected}
+              description={
+                selectedSection === SettingsSectionId.APPEARANCE
+                  ? APPEARANCE_DESCRIPTION
+                  : selectedPanel.description
+              }
+            />
+            {selectedSection === SettingsSectionId.APPEARANCE ? (
+              <AppearanceSettings
+                dark={dark}
+                setDark={setDark}
+                accentColor={accentColor}
+                setAccentColor={setAccentColor}
+              />
+            ) : (
+              <SettingsPanel
+                selectedSection={selectedSection}
+                selectedPanel={selectedPanel}
+                lowPower={lowPower}
+                systemPreferences={systemPreferences}
+                settingChecked={settingChecked}
+                toggleSetting={toggleSetting}
+                updateSystemPreferences={updateSystemPreferences}
+              />
+            )}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

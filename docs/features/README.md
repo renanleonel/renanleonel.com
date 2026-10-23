@@ -25,7 +25,7 @@ Important source files:
 | Concern | Source |
 | --- | --- |
 | State owner | `containers/desktop-provider.tsx` |
-| Cross-surface assembly | `src/app/containers/desktop-composition-container.tsx` |
+| Cross-surface assembly | `src/app/containers/desktop-composition-container.tsx` (entry) and `desktop-session-container.tsx` (after login) |
 | Dock and Launchpad order | `domain/constants/dock-applications.ts`, `launchpad-applications.ts` |
 | Menu-to-overlay mapping | `domain/constants/menu-overlays.ts` |
 | System preference defaults | `domain/constants/default-system-preferences.ts` |
@@ -57,7 +57,7 @@ Important source files:
 
 Path: `src/features/finder`
 
-Finder is the primary portfolio navigation experience and the only eagerly loaded application. It opens initially in the Portfolio section.
+Finder is the primary portfolio navigation experience and the only application loaded with the desktop session. It opens initially in the Portfolio section and keeps a per-window back/forward history (`finder/domain/reducers/navigate-finder-history.ts`).
 
 Capabilities:
 
@@ -75,9 +75,9 @@ Finder preferences persist in `macos27:finder-preferences`; current section, que
 
 Path: `src/features/safari`
 
-Safari renders a static portfolio webpage inside a simulated browser frame. It contains a hero, work section, and contact navigation; it is not a general-purpose browser and does not navigate remote pages.
+Safari renders the portfolio webpage inside a Safari 26 frame (sidebar and history capsules, a centred address field with a working reload, share / new tab / tab overview). The page scrolls beneath the glass toolbar. It is not a general-purpose browser and does not navigate remote pages.
 
-Project cards are typed in `domain/constants/portfolio-projects.ts`. Hero, availability, navigation, and email copy live in `components/safari-content.tsx`. Current content is placeholder portfolio material.
+The page (`components/safari-page.tsx`) lists the account's eight most recently pushed repositories and recent dev.to posts. `domain/selectors/select-recent-repositories.ts` picks the repositories: original, non-archived work with a description, newest push first. They render from a build-time snapshot and are refreshed from the `/api/github-repositories` server function; `domain/constants/recent-repositories.ts` is the fallback for builds that could not reach GitHub. Reload remounts the page and refetches.
 
 ### Messages
 

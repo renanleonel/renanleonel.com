@@ -4,7 +4,7 @@ import { AppId } from '@/shared/domain/enums/app-id';
 type FileMenuProps = { openApp: (app: AppId) => void };
 export function FileMenu({ openApp }: FileMenuProps) {
   return (
-    <SystemMenu className='file-menu [&.file-menu]:left-28.75'>
+    <SystemMenu className='file-menu'>
       <MenuCommand shortcut='⌘N' onClick={() => openApp(AppId.FINDER)}>
         Show Finder
       </MenuCommand>

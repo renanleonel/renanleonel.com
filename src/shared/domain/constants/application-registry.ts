@@ -1,4 +1,5 @@
 import { AppId } from '@/shared/domain/enums/app-id';
+import { WindowChrome } from '@/shared/domain/enums/window-chrome';
 import { PROFILE } from '@/shared/domain/constants/profile';
 import type { ApplicationMetadata } from '@/shared/domain/models/application-metadata';
 
@@ -6,6 +7,7 @@ export const APPLICATION_REGISTRY: Record<AppId, ApplicationMetadata> = {
   [AppId.FINDER]: {
     label: 'Finder',
     title: 'Portfolio',
+    chrome: WindowChrome.UNIFIED,
     width: 980,
     height: 620,
     x: 210,
@@ -14,6 +16,7 @@ export const APPLICATION_REGISTRY: Record<AppId, ApplicationMetadata> = {
   [AppId.SAFARI]: {
     label: 'Safari',
     title: 'Safari',
+    chrome: WindowChrome.UNIFIED,
     width: 1020,
     height: 650,
     x: 250,
@@ -22,6 +25,7 @@ export const APPLICATION_REGISTRY: Record<AppId, ApplicationMetadata> = {
   [AppId.MESSAGES]: {
     label: 'Messages',
     title: 'Messages',
+    chrome: WindowChrome.UNIFIED,
     width: 760,
     height: 560,
     x: 360,
@@ -30,6 +34,7 @@ export const APPLICATION_REGISTRY: Record<AppId, ApplicationMetadata> = {
   [AppId.PHOTOS]: {
     label: 'Photos',
     title: 'Photos',
+    chrome: WindowChrome.UNIFIED,
     width: 900,
     height: 610,
     x: 290,
@@ -38,6 +43,7 @@ export const APPLICATION_REGISTRY: Record<AppId, ApplicationMetadata> = {
   [AppId.NOTES]: {
     label: 'Notes',
     title: 'Notes',
+    chrome: WindowChrome.UNIFIED,
     width: 820,
     height: 580,
     x: 330,
@@ -46,6 +52,7 @@ export const APPLICATION_REGISTRY: Record<AppId, ApplicationMetadata> = {
   [AppId.TERMINAL]: {
     label: 'Terminal',
     title: `${PROFILE.shellUser} — zsh`,
+    chrome: WindowChrome.TITLE_BAR,
     width: 760,
     height: 500,
     x: 390,
@@ -55,6 +62,7 @@ export const APPLICATION_REGISTRY: Record<AppId, ApplicationMetadata> = {
     label: 'Settings',
     dockLabel: 'System Settings',
     title: 'System Settings',
+    chrome: WindowChrome.UNIFIED,
     width: 880,
     height: 610,
     x: 310,
@@ -64,6 +72,7 @@ export const APPLICATION_REGISTRY: Record<AppId, ApplicationMetadata> = {
     label: 'About Me',
     menuBarLabel: 'Finder',
     title: 'About This Mac',
+    chrome: WindowChrome.UNIFIED,
     width: 560,
     height: 545,
     x: 470,

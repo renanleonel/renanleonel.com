@@ -52,7 +52,7 @@ export function DesktopProvider({ children }: DesktopProviderProps) {
   const [brightness, setBrightnessState] = useState(readBrightness);
   const [showDesktop, setShowDesktop] = useState(false);
   const [selectedDesktopFile, setSelectedDesktopFile] = useState<DesktopFileId | null>(null);
-  const [bootMode, setBootMode] = useState<BootMode | null>(BootMode.STARTUP);
+  const [bootMode, setBootMode] = useState<BootMode | null>(null);
   const [powerState, setPowerState] = useState<PowerState>(PowerState.AWAKE);
   const [systemDialog, setSystemDialog] = useState<SystemDialogId | null>(null);
 

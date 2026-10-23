@@ -5,8 +5,8 @@ import type { SettingsSectionId } from '@/features/settings/domain/enums/setting
 
 export type SettingsActionsContextValue = {
   selectSection: (section: SettingsSectionId) => void;
-  toggleAccentPicker: () => void;
-  closeAccentPicker: () => void;
+  goBack: () => void;
+  goForward: () => void;
   toggleLocalSetting: (controlId: SettingsControlId) => void;
 };
 

@@ -12,9 +12,9 @@ export const MENU_OVERLAYS: Record<MenuId, OverlayId> = {
 
 export const FINDER_MENUS = [
   MenuId.FILE,
+  MenuId.EDIT,
   MenuId.VIEW,
   MenuId.GO,
-  MenuId.EDIT,
   MenuId.WINDOW,
   MenuId.HELP,
 ] as const;

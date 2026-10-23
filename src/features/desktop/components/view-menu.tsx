@@ -27,7 +27,7 @@ export function ViewMenu({
     close();
   };
   return (
-    <SystemMenu className='view-menu [&.view-menu]:left-40.5'>
+    <SystemMenu className='view-menu'>
       <MenuCommand
         checked={preferences.view === FinderView.ICONS}
         disabled={!finderCommandsEnabled}

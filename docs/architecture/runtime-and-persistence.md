@@ -5,19 +5,20 @@
 The desktop renders one of five top-level modes, coordinated by `DesktopProvider` and `DesktopCompositionContainer`:
 
 ```text
-startup or restart boot -> login -> awake desktop
+first load -> login -> awake desktop
+restart or power on -> boot -> login
                                  -> sleep -> awake desktop
                                  -> shutdown -> power on -> startup boot
                                  -> logout/lock -> login
 ```
 
-- `BootMode.STARTUP` and `BootMode.RESTART` show `BootScreen` for two seconds through the boot timer adapter.
-- After boot, `loggedIn` is false and `LoginScreen` is shown.
+- A first load opens directly on the lock screen (no boot animation), painted statically by `index.html` and then taken over by `LoginScreen` without a fade.
+- `BootMode.STARTUP` (power on) and `BootMode.RESTART` show `BootScreen` for two seconds through the boot timer adapter, then the lock screen fades in.
 - Sleep keeps the session state and reveals `SleepScreen`; wake returns to the desktop.
 - Shutdown clears the logged-in view and shows `ShutdownScreen`; power-on starts a new boot animation.
 - Restart clears login and starts `BootMode.RESTART`.
 
-These states are not persisted. A full page reload always begins with the startup boot flow and the reducer's initial Finder window.
+These states are not persisted. A full page reload always begins at the lock screen with the reducer's initial Finder window.
 
 ## Window lifecycle
 
@@ -36,11 +37,12 @@ Window positions and open applications are session-only and reset on reload.
 
 ## Application loading
 
-`AppContentContainer` is the loading boundary.
+There are two loading boundaries. `DesktopCompositionContainer` dynamically imports `DesktopSessionContainer` (everything after login) as soon as the lock screen mounts and keeps the loaded component in state; it does not use `React.lazy`, which would suspend for a frame of bare wallpaper on login. If the visitor logs in before the chunk arrives, the lock screen stays up until it does (and a failed load is retried on the next click). Inside the session, `AppContentContainer` is the application boundary.
 
 | Content | Loading behavior | Reason |
 | --- | --- | --- |
-| Finder | Eager | It is the initial window and must render immediately after login. |
+| Lock, boot, sleep, shutdown screens | Entry chunk | They are the first screens and must not wait for the desktop. |
+| Finder | Eager within the session chunk | It is the initial window and must render immediately after login. |
 | Safari, Messages, Photos, Notes, Terminal, Settings, About | `React.lazy` | They are loaded only after a user opens the app. |
 
 All lazy content shares `AppContentLoading` through `Suspense`. Keep named-export adaptation in each dynamic import. A loading change must verify first open, reopen, minimize/restore, build chunking, focus, and fallback appearance.
@@ -52,7 +54,7 @@ The application persists a small allowlist through the shared safe local-storage
 | Key | Owner | Shape and default | Validation/fallback |
 | --- | --- | --- | --- |
 | `macos27:accent-color` | Desktop | `AccentColorId`; blue | Accepts only IDs present in `ACCENT_COLORS`. |
-| `macos27:display-brightness` | Desktop | Number; `82` | Coerces to a number and falls back when the result is falsy. |
+| `macos27:display-brightness` | Desktop | Number; `100` | Coerces to a number and falls back when the result is falsy. |
 | `macos27:system-preferences` | Desktop | JSON `SystemPreferences` | Merges parsed partial data over `DEFAULT_SYSTEM_PREFERENCES`; malformed JSON uses all defaults. |
 | `macos27:finder-preferences` | Finder | JSON `FinderPreferences` | Merges parsed partial data over `DEFAULT_FINDER_PREFERENCES`; malformed JSON uses all defaults. |
 | `macos27:today-completed` | Notes | JSON array of `TodayTaskId` | Keeps only string IDs that exist in `TODAY_TASKS`; malformed/non-array data becomes empty. |
@@ -95,6 +97,10 @@ Browser and external APIs are concentrated in adapters or in a scoped hook/conta
 | Viewport and animation frames | `window-manager/adapters/browser-window.ts` | Window IDs, viewport reads, and request/cancel animation frame. |
 | Clipboard | `finder/adapters/portfolio-link-clipboard.ts` | Copies the current URL; returns a friendly fallback string on failure. |
 | Boot timer | `desktop/adapters/boot-timer.ts` | Schedules/cancels the two-second boot completion. |
+| Menu anchor | `desktop/adapters/menu-anchor.ts` | Publishes the clicked menu-bar title's x position as `--menu-anchor-x` so dropdowns open under it. |
+| Dock bounce | `desktop/adapters/dock-bounce.ts` | Plays one launch bounce with the Web Animations API; skipped under reduced motion. |
+| Stylesheet readiness | `shared/adapters/stylesheets-ready.ts` | Resolves when the loader-injected stylesheet has applied, before React mounts. |
+| Repositories request | `safari/adapters/github-repositories.ts` | Fetches `/api/github-repositories` (same origin); a failure keeps the build-time snapshot. |
 | Keyboard events | `desktop/adapters/desktop-keyboard.ts` | Subscribes to document keydown for desktop shortcuts. |
 | Weather request | `desktop/adapters/maringa-weather.ts` | Fetches current conditions from Open-Meteo for Maringa. |
 | Production analytics | `src/main.tsx` via `@vercel/analytics/react` | Loads Vercel's deployment analytics script and reports page-view and visitor metadata when enabled for the project. |
@@ -107,7 +113,17 @@ Hooks and containers own lifecycle cleanup around these capabilities. Domain cod
 
 `useMaringaWeather` starts with `DEFAULT_WEATHER`, requests current conditions immediately, and refreshes every 15 minutes. The request uses an `AbortController`; unmount aborts the request and clears the interval.
 
-Invalid responses, non-success status codes, offline errors, and non-abort exceptions leave the last known or default weather visible. Weather is not stored and is the only feature-owned runtime network request.
+Invalid responses, non-success status codes, offline errors, and non-abort exceptions leave the last known or default weather visible. Weather is not stored.
+
+## GitHub repositories
+
+The Safari page's repository list is the one piece of server-rendered data; the rest of the app is static. It arrives in three layers:
+
+1. **Build time:** `server/github-repositories-plugin.ts` fetches the list while Vite builds and bakes it into the Safari chunk, so the page renders real data without a request.
+2. **Runtime:** the page then requests `/api/github-repositories`, a Vercel Function that calls GitHub and answers with `Cache-Control: s-maxage=3600, stale-while-revalidate=86400`. The CDN serves cached copies, so GitHub sees about one request an hour. An optional `GITHUB_TOKEN` environment variable raises GitHub's rate limit; none is required.
+3. **Fallback:** if the build could not reach GitHub, `FALLBACK_REPOSITORIES` renders until the function answers. A failed or malformed response leaves the current list on screen.
+
+Under `pnpm dev` and `pnpm preview`, the same plugin answers `/api/github-repositories` from a ten-minute memory cache.
 
 ## Analytics behavior
 

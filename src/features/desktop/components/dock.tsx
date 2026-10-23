@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 
+import { bounceDockIcon } from '@/features/desktop/adapters/dock-bounce';
 import { DOCK_APPLICATIONS } from '@/features/desktop/domain/constants/dock-applications';
 import { APPLICATION_REGISTRY } from '@/shared/domain/constants/application-registry';
 import { AppIcon } from '@/shared/components/app-icon';
@@ -55,6 +56,8 @@ export function Dock({ windows, launch, size, showRecentApps }: DockProps) {
               '[&.dock-item]:relative [&.dock-item]:w-(--dock-size,50px) [&.dock-item]:h-(--dock-size,50px) [&.dock-item]:flex-[0_0_var(--dock-size,50px)] [&.dock-item]:p-0 [&.dock-item]:[border:0] [&.dock-item]:[background:transparent] [&.dock-item]:basis-(--dock-size,50px)',
               '[&.dock-item_>_i]:absolute [&.dock-item_>_i]:left-[50%] [&.dock-item_>_i]:-bottom-1.25 [&.dock-item_>_i]:w-1 [&.dock-item_>_i]:h-1 [&.dock-item_>_i]:rounded-[50%] [&.dock-item_>_i]:[background:oklch(0.2_0.01_250)] [&.dock-item_>_i]:opacity-[0] [&.dock-item_>_i]:transform-[translateX(-50%)]',
               '[&.dock-item_>_i.running]:opacity-[0.82]',
+              '[&.dock-item_.app-icon]:[transition:filter_120ms_ease-out] [&.dock-item:active_.app-icon]:brightness-[0.72]',
+              '[&.dock-item:focus-visible_.dock-tooltip]:opacity-[1] [&.dock-item:focus-visible_.dock-tooltip]:transform-[translate(-50%,0)]',
               '[&.dock-item:hover_.dock-tooltip]:opacity-[1] [&.dock-item:hover_.dock-tooltip]:transform-[translate(-50%,0)]',
               'max-[900px]:[&.dock-item]:w-11 max-[900px]:[&.dock-item]:h-11 max-[900px]:[&.dock-item]:basis-11',
               '[&.dock-item--separated]:ml-3',
@@ -66,7 +69,12 @@ export function Dock({ windows, launch, size, showRecentApps }: DockProps) {
                 ? (event) => event.stopPropagation()
                 : undefined
             }
-            onClick={() => launch(app.id)}
+            onClick={(event) => {
+              if (!running && app.id !== DockUtilityId.TRASH && app.id !== DockUtilityId.LAUNCHPAD) {
+                bounceDockIcon(event.currentTarget.querySelector('.app-icon'));
+              }
+              launch(app.id);
+            }}
           >
             <span className='dock-tooltip [&.dock-tooltip]:absolute [&.dock-tooltip]:left-[50%] [&.dock-tooltip]:bottom-[calc(100%+12px)] [&.dock-tooltip]:p-[5px_9px] [&.dock-tooltip]:rounded-lg [&.dock-tooltip]:text-[oklch(0.2_0.01_250)] [&.dock-tooltip]:[background:var(--glass-regular)] [&.dock-tooltip]:[backdrop-filter:blur(26px)_saturate(1.45)] [&.dock-tooltip]:[box-shadow:inset_0_0_0_1px_var(--glass-stroke),0_5px_12px_oklch(0.08_0.03_245/0.2)] [&.dock-tooltip]:opacity-[0] [&.dock-tooltip]:pointer-events-none [&.dock-tooltip]:whitespace-nowrap [&.dock-tooltip]:text-[12px] [&.dock-tooltip]:transform-[translate(-50%,5px)] [&.dock-tooltip]:[transition:opacity_130ms,transform_130ms] [&.dock-tooltip]:[-webkit-backdrop-filter:blur(26px)_saturate(1.45)]'>
               {app.label}

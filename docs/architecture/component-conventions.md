@@ -49,8 +49,9 @@ The project uses Tailwind CSS 4 through the Vite plugin, without a `tailwind.con
 
 Styling is split deliberately:
 
-- `index.html` contains document-level system tokens, root defaults, focus behavior, and reduced-motion utilities needed from first paint.
-- `src/styles.css` imports Tailwind, declares the wallpaper rule, and owns global keyframes.
+- `index.html` contains the static first-paint lock screen with its inline styles, the Inter `@font-face`, and the root reduced-motion utilities.
+- `src/styles.css` imports Tailwind and owns, in the `base` layer, the system tokens, document defaults, resets, focus rings, and overlay scrollbars; it also declares the wallpaper rule and global keyframes.
+- `src/shared/domain/constants/liquid-glass.ts` owns shared materials and controls: `GLASS_MENU`, `GLASS_DOCK`, `GLASS_MODULE`, `CONTROL_TOGGLE`, `GLASS_WIDGET`, `GLASS_SIDEBAR`, `WINDOW_TOOLBAR`, `GLASS_TOOLBAR_GROUP`, `TOOLBAR_BUTTON`, `GLASS_TOOLBAR_FIELD`, `SIDEBAR_ROW`, `SIDEBAR_HEADING`, `SYSTEM_SWITCH`, `MENU_SWITCH` (menus and System Settings rows), `SYSTEM_SLIDER`, and `ROUND_CHECKBOX`. System Settings form groups and rows are `SETTINGS_GROUP` and `SETTINGS_ROW` in `src/features/settings/domain/constants/settings-form.ts`.
 - `desktop/components/desktop-shell.tsx` colocates the `.desktop--dark` token overrides and dark descendant variants with the shell that activates them.
 - Components own feature-specific utilities and state selectors in `className` strings.
 - `src/shared/utils/cn.ts` joins conditional class values.
@@ -126,7 +127,7 @@ Do not move pointer-move window coordinates into React state. That would change 
 - Use separate state/action contexts at existing shared seams.
 - React Compiler is enabled; do not add speculative manual memoization.
 - Preserve component mount semantics. Minimized application content stays mounted, while closing a window unmounts it.
-- Keep Finder eager and the other app surfaces lazy unless loading behavior is explicitly in scope.
+- Keep the lock screen in the entry chunk, Finder eager within the session chunk, and the other app surfaces lazy unless loading behavior is explicitly in scope.
 
 Performance changes must be justified with runtime evidence and verified against interaction behavior, not inferred from component size or provider count alone.
 

@@ -31,18 +31,25 @@ export function SettingsProvider({
   selectedSection,
   setSelectedSection,
 }: SettingsProviderProps) {
-  const [accentOpen, setAccentOpen] = useState(false);
   const [toggleValues, setToggleValues] = useState(createInitialToggleValues);
+  // Back/forward history of panes chosen inside the window, like the toolbar
+  // arrows in System Settings.
+  const [history, setHistory] = useState({ entries: [selectedSection], index: 0 });
 
   const selectSection = (section: SettingsSectionId) => {
+    if (section === selectedSection) return;
     setSelectedSection(section);
-    setAccentOpen(false);
+    setHistory(({ entries, index }) => ({
+      entries: [...entries.slice(0, index + 1), section],
+      index: index + 1,
+    }));
   };
-  const toggleAccentPicker = () => {
-    setAccentOpen((open) => !open);
-  };
-  const closeAccentPicker = () => {
-    setAccentOpen(false);
+  const stepHistory = (offset: -1 | 1) => {
+    const index = history.index + offset;
+    const section = history.entries[index];
+    if (!section) return;
+    setSelectedSection(section);
+    setHistory({ entries: history.entries, index });
   };
   const toggleLocalSetting = (controlId: SettingsControlId) => {
     setToggleValues((current) => ({
@@ -51,11 +58,16 @@ export function SettingsProvider({
     }));
   };
 
-  const state: SettingsStateContextValue = { selectedSection, accentOpen, toggleValues };
+  const state: SettingsStateContextValue = {
+    selectedSection,
+    toggleValues,
+    canGoBack: history.index > 0,
+    canGoForward: history.index < history.entries.length - 1,
+  };
   const actions: SettingsActionsContextValue = {
     selectSection,
-    toggleAccentPicker,
-    closeAccentPicker,
+    goBack: () => stepHistory(-1),
+    goForward: () => stepHistory(1),
     toggleLocalSetting,
   };
 

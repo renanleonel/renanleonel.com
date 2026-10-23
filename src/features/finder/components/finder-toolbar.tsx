@@ -3,7 +3,7 @@ import {
   ChevronRight,
   Columns3,
   GalleryVerticalEnd,
-  Grid2X2,
+  LayoutGrid,
   List,
   MoreHorizontal,
   Search,
@@ -16,6 +16,12 @@ import { FinderSection } from '@/features/finder/domain/enums/finder-section';
 import { FinderToolbarMenu } from '@/features/finder/domain/enums/finder-toolbar-menu';
 import { FinderView } from '@/features/finder/domain/enums/finder-view';
 import type { FinderPreferences } from '@/features/finder/domain/models/finder-preferences';
+import {
+  GLASS_TOOLBAR_FIELD,
+  GLASS_TOOLBAR_GROUP,
+  TOOLBAR_BUTTON,
+  WINDOW_TOOLBAR,
+} from '@/shared/domain/constants/liquid-glass';
 import { cn } from '@/shared/utils/cn';
 
 type FinderToolbarProps = {
@@ -24,6 +30,11 @@ type FinderToolbarProps = {
   toolbarMenu: FinderToolbarMenu | null;
   shareStatus: string;
   preferences: FinderPreferences;
+  sidebarVisible: boolean;
+  canGoBack: boolean;
+  canGoForward: boolean;
+  onGoBack: () => void;
+  onGoForward: () => void;
   onQueryChange: (query: string) => void;
   onToggleShareMenu: () => void;
   onToggleMoreMenu: () => void;
@@ -39,6 +50,11 @@ export function FinderToolbar({
   toolbarMenu,
   shareStatus,
   preferences,
+  sidebarVisible,
+  canGoBack,
+  canGoForward,
+  onGoBack,
+  onGoForward,
   onQueryChange,
   onToggleShareMenu,
   onToggleMoreMenu,
@@ -51,107 +67,124 @@ export function FinderToolbar({
     <div
       className={cn(
         'finder-toolbar',
-        '[&.finder-toolbar]:relative [&.finder-toolbar]:z-10 [&.finder-toolbar]:h-12.5 [&.finder-toolbar]:flex-[0_0_46px] [&.finder-toolbar]:flex [&.finder-toolbar]:items-center [&.finder-toolbar]:gap-3.25 [&.finder-toolbar]:p-[0_12px] [&.finder-toolbar]:[border-bottom:1px_solid_var(--separator)] [&.finder-toolbar]:basis-12.5 [&.finder-toolbar]:[background:linear-gradient(180deg,oklch(1_0_0/0.28),transparent_52%),var(--material-toolbar)] [&.finder-toolbar]:border-b-[oklch(0.36_0.01_250/0.15)] [&.finder-toolbar]:[backdrop-filter:blur(28px)_saturate(1.25)] [&.finder-toolbar]:[-webkit-backdrop-filter:blur(28px)_saturate(1.25)]',
-        '[&.finder-toolbar_>_button]:[border:0] [&.finder-toolbar_>_button]:[background:transparent] [&.finder-toolbar_>_button]:p-1 [&.finder-toolbar_>_button]:text-[oklch(0.34_0.012_250)]',
-        "[&.finder-toolbar_>_button[aria-expanded='true']]:rounded-[7px] [&.finder-toolbar_>_button[aria-expanded='true']]:[background:oklch(1_0_0/0.52)] [&.finder-toolbar_>_button[aria-expanded='true']]:[box-shadow:inset_0_0_0_1px_oklch(0.35_0.01_250/0.1),0_1px_3px_oklch(0.12_0.02_250/0.12)]",
-        '[@media(prefers-reduced-transparency:_reduce)]:[&.finder-toolbar]:[backdrop-filter:none] [@media(prefers-reduced-transparency:_reduce)]:[&.finder-toolbar]:[-webkit-backdrop-filter:none]',
+        WINDOW_TOOLBAR,
+        'touch-none max-[600px]:pl-24',
+        !sidebarVisible && 'pl-24',
       )}
+      data-window-drag-region
     >
-      <span className='window-nav [&.window-nav]:flex [&.window-nav]:gap-2.5 [&.window-nav]:text-[oklch(0.52_0.01_250)]'>
-        <ChevronLeft size={18} />
-        <ChevronRight size={18} />
-      </span>
-      <div
-        className={cn(
-          'view-switcher',
-          '[&.view-switcher]:flex [&.view-switcher]:gap-px [&.view-switcher]:items-center [&.view-switcher]:p-0.75 [&.view-switcher]:rounded-[10px] [&.view-switcher]:[background:oklch(0.8_0.012_250/0.3)] [&.view-switcher]:[box-shadow:inset_0_0_0_1px_oklch(0.35_0.01_250/0.1),inset_0_1px_oklch(1_0_0/0.42)]',
-          '[&.view-switcher_button]:w-6.75 [&.view-switcher_button]:h-6 [&.view-switcher_button]:grid [&.view-switcher_button]:place-items-center [&.view-switcher_button]:p-0 [&.view-switcher_button]:[border:0] [&.view-switcher_button]:rounded-[7px] [&.view-switcher_button]:[background:transparent]',
-          '[&.view-switcher_button.selected]:[background:oklch(1_0_0/0.72)] [&.view-switcher_button.selected]:[box-shadow:0_1px_3px_oklch(0.16_0.02_250/0.2),inset_0_0_0_1px_oklch(1_0_0/0.5)]',
-        )}
-      >
+      <div className={GLASS_TOOLBAR_GROUP}>
         <button
           type='button'
-          className={cn(preferences.view === FinderView.ICONS ? 'selected' : '')}
+          className={TOOLBAR_BUTTON}
+          aria-label='Back'
+          disabled={!canGoBack}
+          onClick={onGoBack}
+        >
+          <ChevronLeft size={18} strokeWidth={2} />
+        </button>
+        <button
+          type='button'
+          className={TOOLBAR_BUTTON}
+          aria-label='Forward'
+          disabled={!canGoForward}
+          onClick={onGoForward}
+        >
+          <ChevronRight size={18} strokeWidth={2} />
+        </button>
+      </div>
+      <h2 className='min-w-0 m-0 ml-1.5 truncate text-[15px] font-bold tracking-[-0.01em]'>
+        {section}
+      </h2>
+      <span className='flex-1' />
+      <div className={cn('view-switcher', GLASS_TOOLBAR_GROUP, 'max-[700px]:hidden')}>
+        <button
+          type='button'
+          className={TOOLBAR_BUTTON}
+          aria-pressed={preferences.view === FinderView.ICONS}
           aria-label='View as Icons'
           onClick={() => onUpdatePreferences({ view: FinderView.ICONS })}
         >
-          <Grid2X2 size={16} />
+          <LayoutGrid size={16} strokeWidth={1.9} />
         </button>
         <button
           type='button'
-          className={cn(preferences.view === FinderView.LIST ? 'selected' : '')}
+          className={TOOLBAR_BUTTON}
+          aria-pressed={preferences.view === FinderView.LIST}
           aria-label='View as List'
           onClick={() => onUpdatePreferences({ view: FinderView.LIST })}
         >
-          <List size={16} />
+          <List size={17} strokeWidth={1.9} />
         </button>
         <button
           type='button'
-          className={cn(preferences.view === FinderView.COLUMNS ? 'selected' : '')}
+          className={TOOLBAR_BUTTON}
+          aria-pressed={preferences.view === FinderView.COLUMNS}
           aria-label='View as Columns'
           onClick={() => onUpdatePreferences({ view: FinderView.COLUMNS })}
         >
-          <Columns3 size={16} />
+          <Columns3 size={16} strokeWidth={1.9} />
         </button>
         <button
           type='button'
-          className={cn(preferences.view === FinderView.GALLERY ? 'selected' : '')}
+          className={TOOLBAR_BUTTON}
+          aria-pressed={preferences.view === FinderView.GALLERY}
           aria-label='View as Gallery'
           onClick={() => onUpdatePreferences({ view: FinderView.GALLERY })}
         >
-          <GalleryVerticalEnd size={16} />
+          <GalleryVerticalEnd size={16} strokeWidth={1.9} />
         </button>
       </div>
-      <span className='toolbar-spacer [&.toolbar-spacer]:flex-1' />
-      <button
-        type='button'
-        aria-label='Share'
-        aria-haspopup='menu'
-        aria-expanded={toolbarMenu === FinderToolbarMenu.SHARE}
-        onClick={onToggleShareMenu}
-      >
-        <Share size={16} />
-      </button>
-      <button
-        type='button'
-        aria-label='More'
-        aria-haspopup='menu'
-        aria-expanded={toolbarMenu === FinderToolbarMenu.MORE}
-        onClick={onToggleMoreMenu}
-      >
-        <MoreHorizontal size={17} />
-      </button>
+      <div className='relative flex-none'>
+        <div className={GLASS_TOOLBAR_GROUP}>
+          <button
+            type='button'
+            className={TOOLBAR_BUTTON}
+            aria-label='Share'
+            aria-haspopup='menu'
+            aria-expanded={toolbarMenu === FinderToolbarMenu.SHARE}
+            onClick={onToggleShareMenu}
+          >
+            <Share size={16} strokeWidth={1.9} />
+          </button>
+          <button
+            type='button'
+            className={TOOLBAR_BUTTON}
+            aria-label='More'
+            aria-haspopup='menu'
+            aria-expanded={toolbarMenu === FinderToolbarMenu.MORE}
+            onClick={onToggleMoreMenu}
+          >
+            <MoreHorizontal size={18} strokeWidth={1.9} />
+          </button>
+        </div>
+        {toolbarMenu === FinderToolbarMenu.SHARE ? (
+          <FinderShareMenu
+            section={section}
+            shareStatus={shareStatus}
+            onShareInMessages={onShareInMessages}
+            onCopyPortfolioLink={onCopyPortfolioLink}
+          />
+        ) : null}
+        {toolbarMenu === FinderToolbarMenu.MORE ? (
+          <FinderMoreMenu
+            preferences={preferences}
+            onCloseMenu={onCloseMenu}
+            onUpdatePreferences={onUpdatePreferences}
+          />
+        ) : null}
+      </div>
       <label
-        className={cn(
-          'finder-search',
-          '[&.finder-search]:w-45 [&.finder-search]:h-7 [&.finder-search]:flex [&.finder-search]:items-center [&.finder-search]:gap-1.5 [&.finder-search]:p-[0_10px] [&.finder-search]:rounded-[999px] [&.finder-search]:text-[oklch(0.53_0.01_250)] [&.finder-search]:[background:oklch(1_0_0/0.56)] [&.finder-search]:[box-shadow:inset_0_0_0_1px_oklch(0.32_0.01_250/0.13),inset_0_1px_oklch(1_0_0/0.7),0_1px_3px_oklch(0.16_0.02_250/0.08)]',
-          '[&.finder-search_input]:min-w-0 [&.finder-search_input]:w-full [&.finder-search_input]:[border:0] [&.finder-search_input]:[outline:0] [&.finder-search_input]:[background:transparent] [&.finder-search_input]:text-[12px]',
-          'max-[600px]:[&.finder-search]:hidden',
-        )}
+        className={cn('finder-search', GLASS_TOOLBAR_FIELD, 'w-44 flex-none max-[600px]:hidden')}
       >
-        <Search size={14} />
+        <Search size={14} strokeWidth={2} aria-hidden='true' />
         <input
           aria-label='Search files'
-          placeholder={`Search ${section}`}
+          placeholder='Search'
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}
         />
       </label>
-      {toolbarMenu === FinderToolbarMenu.SHARE ? (
-        <FinderShareMenu
-          section={section}
-          shareStatus={shareStatus}
-          onShareInMessages={onShareInMessages}
-          onCopyPortfolioLink={onCopyPortfolioLink}
-        />
-      ) : null}
-      {toolbarMenu === FinderToolbarMenu.MORE ? (
-        <FinderMoreMenu
-          preferences={preferences}
-          onCloseMenu={onCloseMenu}
-          onUpdatePreferences={onUpdatePreferences}
-        />
-      ) : null}
     </div>
   );
 }

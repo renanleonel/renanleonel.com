@@ -1,7 +1,7 @@
-import { Check, ChevronRight } from 'lucide-react';
-
 import { ACCENT_COLORS } from '@/features/desktop/domain/constants/accent-colors';
 import type { AccentColorId } from '@/features/desktop/domain/enums/accent-color-id';
+import { SETTINGS_GROUP, SETTINGS_ROW } from '@/features/settings/domain/constants/settings-form';
+import { MENU_SWITCH } from '@/shared/domain/constants/liquid-glass';
 import { cn } from '@/shared/utils/cn';
 
 type AppearanceSettingsProps = {
@@ -9,152 +9,101 @@ type AppearanceSettingsProps = {
   setDark: (value: boolean) => void;
   accentColor: AccentColorId;
   setAccentColor: (value: AccentColorId) => void;
-  accentOpen: boolean;
-  toggleAccentPicker: () => void;
-  closeAccentPicker: () => void;
 };
 
+/** A miniature desktop: wallpaper with a window and its title strip. */
+const APPEARANCE_PREVIEW =
+  'relative block h-11.5 w-17 overflow-hidden rounded-[7px] [box-shadow:inset_0_0_0_0.5px_oklch(0_0_0/0.18)] before:absolute before:top-2 before:left-2.5 before:h-7 before:w-11 before:rounded-[4px] before:content-[""] after:absolute after:top-2 after:left-2.5 after:h-2 after:w-11 after:rounded-t-[4px] after:content-[""]';
+
+/**
+ * The Appearance pane as macOS lays it out: theme thumbnails, the accent colour
+ * row of swatches, and window tinting, each a row of one grouped form.
+ */
 export function AppearanceSettings({
   dark,
   setDark,
   accentColor,
   setAccentColor,
-  accentOpen,
-  toggleAccentPicker,
-  closeAccentPicker,
 }: AppearanceSettingsProps) {
+  const themes = [
+    {
+      label: 'Light',
+      selected: !dark,
+      select: () => setDark(false),
+      preview:
+        '[background:linear-gradient(160deg,oklch(0.72_0.11_230),oklch(0.55_0.13_250))] before:bg-[oklch(0.98_0_0)] after:bg-[oklch(0.92_0.004_250)]',
+    },
+    {
+      label: 'Dark',
+      selected: dark,
+      select: () => setDark(true),
+      preview:
+        '[background:linear-gradient(160deg,oklch(0.32_0.08_255),oklch(0.18_0.05_260))] before:bg-[oklch(0.26_0.005_250)] after:bg-[oklch(0.34_0.005_250)]',
+    },
+  ];
+  const accents = Object.entries(ACCENT_COLORS) as [
+    AccentColorId,
+    (typeof ACCENT_COLORS)[AccentColorId],
+  ][];
+
   return (
-    <>
-      <section>
-        <h2>Appearance</h2>
-        <div
-          className={cn(
-            'appearance-choices',
-            '[&.appearance-choices]:flex [&.appearance-choices]:gap-3.75',
-            '[&.appearance-choices_button]:flex [&.appearance-choices_button]:flex-col [&.appearance-choices_button]:items-center [&.appearance-choices_button]:gap-1.75 [&.appearance-choices_button]:p-1.25 [&.appearance-choices_button]:[border:2px_solid_transparent] [&.appearance-choices_button]:rounded-[10px] [&.appearance-choices_button]:[background:transparent] [&.appearance-choices_button]:text-[12px]',
-            '[&.appearance-choices_button.selected]:border-(--system-blue)',
-          )}
-        >
-          <button
-            type='button'
-            onClick={() => setDark(false)}
-            className={cn(!dark ? 'selected' : '')}
-            aria-pressed={!dark}
-          >
-            <span className='appearance-preview appearance-preview--light [&.appearance-preview]:w-27.5 [&.appearance-preview]:h-17.5 [&.appearance-preview]:rounded-[7px] [&.appearance-preview]:[background:linear-gradient(145deg,oklch(0.97_0_0)_0_30%,oklch(0.8_0.02_250)_30%_33%,oklch(0.91_0.01_250)_33%)] [&.appearance-preview]:[box-shadow:inset_0_0_0_1px_oklch(0.3_0.01_250/0.2)]' />
-            Light
-          </button>
-          <button
-            type='button'
-            onClick={() => setDark(true)}
-            className={cn(dark ? 'selected' : '')}
-            aria-pressed={dark}
-          >
-            <span
-              className={cn(
-                'appearance-preview',
-                'appearance-preview--dark',
-                '[&.appearance-preview]:w-27.5 [&.appearance-preview]:h-17.5 [&.appearance-preview]:rounded-[7px] [&.appearance-preview]:[background:linear-gradient(145deg,oklch(0.97_0_0)_0_30%,oklch(0.8_0.02_250)_30%_33%,oklch(0.91_0.01_250)_33%)] [&.appearance-preview]:[box-shadow:inset_0_0_0_1px_oklch(0.3_0.01_250/0.2)]',
-                '[&.appearance-preview--dark]:[background:linear-gradient(145deg,oklch(0.18_0.01_250)_0_30%,oklch(0.42_0.02_250)_30%_33%,oklch(0.28_0.01_250)_33%)]',
-              )}
-            />
-            Dark
-          </button>
-        </div>
-      </section>
-      <section
-        className={cn(
-          'settings-list',
-          '[&.settings-list]:p-0!',
-          '[&.settings-list_label]:min-h-15.5 [&.settings-list_label]:flex [&.settings-list_label]:items-center [&.settings-list_label]:justify-between [&.settings-list_label]:p-[10px_15px] [&.settings-list_label]:[border-bottom:1px_solid_var(--separator)]',
-          '[&.settings-list_.settings-row]:min-h-15.5 [&.settings-list_.settings-row]:flex [&.settings-list_.settings-row]:items-center [&.settings-list_.settings-row]:justify-between [&.settings-list_.settings-row]:p-[10px_15px] [&.settings-list_.settings-row]:[border-bottom:1px_solid_var(--separator)]',
-          '[&.settings-list_>_:last-child]:[border-bottom:0]',
-          '[&.settings-list_label_>_span]:min-w-0 [&.settings-list_label_>_span]:flex [&.settings-list_label_>_span]:flex-col',
-          '[&.settings-list_.settings-row_>_span:first-child]:min-w-0 [&.settings-list_.settings-row_>_span:first-child]:flex [&.settings-list_.settings-row_>_span:first-child]:flex-col',
-          '[&.settings-list_small]:text-(--label-secondary) [&.settings-list_small]:leading-[1.35]',
-          '[&.settings-list_input]:w-8.5 [&.settings-list_input]:accent-(--system-blue)',
-          '[&.settings-list_.accent-control:last-child]:[border-bottom:0]',
-        )}
-        key='appearance-settings'
-      >
-        <div
-          className={cn(
-            'accent-control',
-            '[&.accent-control]:[border-bottom:1px_solid_var(--separator)]',
-            '[&.accent-control_.settings-row]:[border-bottom:0]',
-          )}
-        >
-          <button
-            type='button'
-            className='settings-row settings-row--button [&.settings-row--button]:w-full [&.settings-row--button]:[border:0] [&.settings-row--button]:text-inherit [&.settings-row--button]:[background:transparent] [&.settings-row--button]:text-left'
-            aria-expanded={accentOpen}
-            aria-controls='accent-color-picker'
-            onClick={toggleAccentPicker}
-          >
-            <span>
-              <strong>Accent color</strong>
-              <small>{ACCENT_COLORS[accentColor].label} is used for selections and controls.</small>
-            </span>
-            <span className='accent-value [&.accent-value]:flex! [&.accent-value]:flex-row! [&.accent-value]:items-center [&.accent-value]:gap-2'>
-              <i
-                className='accent-dot [&.accent-dot]:w-6 [&.accent-dot]:h-6 [&.accent-dot]:rounded-[50%] [&.accent-dot]:[background:var(--system-blue)] [&.accent-dot]:[box-shadow:inset_0_0_0_2px_oklch(1_0_0/0.5)]'
-                style={{ background: ACCENT_COLORS[accentColor].color }}
-              />
-              <ChevronRight size={15} aria-hidden='true' />
-            </span>
-          </button>
-          {accentOpen ? (
-            <dialog
-              className={cn(
-                'accent-picker',
-                '[&.accent-picker]:p-[12px_15px_15px] [&.accent-picker]:[border-bottom:1px_solid_var(--separator)] [&.accent-picker]:animate-[accent-picker-in_150ms_var(--ease-mac)_both] [&.accent-picker]:static [&.accent-picker]:w-auto [&.accent-picker]:max-w-none [&.accent-picker]:m-0 [&.accent-picker]:[border:0] [&.accent-picker]:text-inherit [&.accent-picker]:[background:transparent]',
-                '[&.accent-picker_>_strong]:block [&.accent-picker_>_strong]:mb-2.5 [&.accent-picker_>_strong]:text-[12px]',
-                '[&.accent-picker_>_div]:flex [&.accent-picker_>_div]:flex-wrap [&.accent-picker_>_div]:gap-3',
-                '[&.accent-picker_button]:min-w-11 [&.accent-picker_button]:flex [&.accent-picker_button]:flex-col [&.accent-picker_button]:items-center [&.accent-picker_button]:gap-1.25 [&.accent-picker_button]:p-0 [&.accent-picker_button]:[border:0] [&.accent-picker_button]:[background:transparent]',
-                '[&.accent-picker_button_>_span]:w-7 [&.accent-picker_button_>_span]:h-7 [&.accent-picker_button_>_span]:grid [&.accent-picker_button_>_span]:place-items-center [&.accent-picker_button_>_span]:rounded-[50%] [&.accent-picker_button_>_span]:text-[white] [&.accent-picker_button_>_span]:[box-shadow:inset_0_0_0_2px_oklch(1_0_0/0.52),0_1px_3px_oklch(0.15_0.02_250/0.2)]',
-                "[&.accent-picker_button[aria-pressed='true']_>_span]:[outline:2px_solid_var(--system-blue)] [&.accent-picker_button[aria-pressed='true']_>_span]:outline-offset-2",
-                '[&.accent-picker_button_small]:text-[10px]',
-              )}
-              id='accent-color-picker'
-              aria-label='Accent color'
-              open
+    <section className={SETTINGS_GROUP} key='appearance-settings'>
+      <div className={cn(SETTINGS_ROW, 'py-3')}>
+        <span>Appearance</span>
+        <span className='flex gap-4' role='radiogroup' aria-label='Appearance'>
+          {themes.map((theme) => (
+            <button
+              type='button'
+              role='radio'
+              aria-checked={theme.selected}
+              className='flex flex-col items-center gap-1.5 border-0 bg-transparent p-0 text-[11px] text-(--label-primary)'
+              key={theme.label}
+              onClick={theme.select}
             >
-              <strong>Accent color</strong>
-              <div>
-                {(
-                  Object.entries(ACCENT_COLORS) as [
-                    AccentColorId,
-                    (typeof ACCENT_COLORS)[AccentColorId],
-                  ][]
-                ).map(([id, accent]) => (
-                  <button
-                    type='button'
-                    key={id}
-                    aria-label={`${accent.label} accent color`}
-                    aria-pressed={accentColor === id}
-                    onClick={() => {
-                      setAccentColor(id);
-                      closeAccentPicker();
-                    }}
-                  >
-                    <span style={{ background: accent.color }}>
-                      {accentColor === id ? <Check size={14} /> : null}
-                    </span>
-                    <small>{accent.label}</small>
-                  </button>
-                ))}
-              </div>
-            </dialog>
-          ) : null}
-        </div>
-        <label>
-          <span>
-            <strong>Allow wallpaper tinting</strong>
-            <small>Windows adapt to the desktop behind them.</small>
+              <span
+                className={cn(
+                  'rounded-[9px] p-0.5',
+                  theme.selected
+                    ? '[box-shadow:0_0_0_3px_var(--system-blue)]'
+                    : '[box-shadow:0_0_0_3px_transparent]',
+                )}
+              >
+                <span className={cn(APPEARANCE_PREVIEW, theme.preview)} />
+              </span>
+              <span className={cn(theme.selected && 'font-semibold')}>{theme.label}</span>
+            </button>
+          ))}
+        </span>
+      </div>
+      <div className={SETTINGS_ROW}>
+        <span>Accent color</span>
+        <span className='flex flex-col items-end gap-1'>
+          <span className='flex gap-2' role='radiogroup' aria-label='Accent color'>
+            {accents.map(([id, accent]) => (
+              <button
+                type='button'
+                role='radio'
+                aria-checked={accentColor === id}
+                aria-label={accent.label}
+                className='grid size-4 place-items-center rounded-full border-0 p-0 [box-shadow:inset_0_0_0_0.5px_oklch(0_0_0/0.18)]'
+                style={{ background: accent.color }}
+                key={id}
+                onClick={() => setAccentColor(id)}
+              >
+                {accentColor === id ? <span className='size-1.5 rounded-full bg-white' /> : null}
+              </button>
+            ))}
           </span>
-          <input type='checkbox' defaultChecked />
-        </label>
-      </section>
-    </>
+          <small>{ACCENT_COLORS[accentColor].label}</small>
+        </span>
+      </div>
+      <label className={SETTINGS_ROW}>
+        <span>
+          Allow wallpaper tinting in windows
+          <small>Windows adapt to the desktop behind them.</small>
+        </span>
+        <input className={MENU_SWITCH} type='checkbox' role='switch' defaultChecked />
+      </label>
+    </section>
   );
 }

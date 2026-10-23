@@ -13,7 +13,7 @@ export function HelpMenu({ openApp, openShortcuts }: HelpMenuProps) {
   const hasResults = ['macOS Help', 'About This Portfolio', 'Keyboard Shortcuts'].some(matches);
 
   return (
-    <SystemMenu className='help-menu [&.help-menu]:left-97 [&.help-menu]:w-70'>
+    <SystemMenu className='help-menu w-70! [--menu-width:280px]'>
       <label
         className={cn(
           'help-search',

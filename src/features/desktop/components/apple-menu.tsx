@@ -24,7 +24,7 @@ export function AppleMenu({
 }: AppleMenuProps) {
   const [recentOpen, setRecentOpen] = useState(false);
   return (
-    <SystemMenu className='apple-menu [&.apple-menu]:left-2'>
+    <SystemMenu className='apple-menu'>
       <button type='button' onClick={() => openApp(AppId.ABOUT)}>
         About This Mac
       </button>

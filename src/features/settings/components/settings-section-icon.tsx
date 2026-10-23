@@ -1,11 +1,11 @@
 import {
-  BatteryCharging,
+  BatteryFull,
   Bell,
   Bluetooth,
-  Globe2,
-  Monitor,
+  Contrast,
+  Globe,
   Moon,
-  Palette,
+  PanelBottom,
   Settings,
   Volume2,
   Wifi,
@@ -17,14 +17,14 @@ import { SettingsSectionId } from '@/features/settings/domain/enums/settings-sec
 const SETTINGS_SECTION_ICONS: Record<SettingsSectionId, LucideIcon> = {
   [SettingsSectionId.WIFI]: Wifi,
   [SettingsSectionId.BLUETOOTH]: Bluetooth,
-  [SettingsSectionId.NETWORK]: Globe2,
+  [SettingsSectionId.NETWORK]: Globe,
   [SettingsSectionId.NOTIFICATIONS]: Bell,
   [SettingsSectionId.SOUND]: Volume2,
-  [SettingsSectionId.BATTERY]: BatteryCharging,
+  [SettingsSectionId.BATTERY]: BatteryFull,
   [SettingsSectionId.FOCUS]: Moon,
   [SettingsSectionId.GENERAL]: Settings,
-  [SettingsSectionId.APPEARANCE]: Palette,
-  [SettingsSectionId.DESKTOP]: Monitor,
+  [SettingsSectionId.APPEARANCE]: Contrast,
+  [SettingsSectionId.DESKTOP]: PanelBottom,
 };
 
 type SettingsSectionIconProps = {

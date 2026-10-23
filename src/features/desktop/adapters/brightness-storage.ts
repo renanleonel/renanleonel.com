@@ -1,7 +1,7 @@
 import { readLocalStorage, writeLocalStorage } from '@/shared/adapters/local-storage';
 
 const BRIGHTNESS_STORAGE_KEY = 'macos27:display-brightness';
-const DEFAULT_BRIGHTNESS = 82;
+const DEFAULT_BRIGHTNESS = 100;
 
 export function readBrightness(): number {
   try {

@@ -1,7 +1,5 @@
 <!doctype html>
-<html
-  lang="en"
-  class="font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','SF_Pro_Display','Inter_Variable','Segoe_UI',sans-serif] text-[oklch(0.22_0.01_250)] [font-synthesis:none] [font-optical-sizing:auto] font-features-['cv02','cv03','cv04','cv11'] [text-rendering:geometricPrecision] [-webkit-font-smoothing:antialiased] [--system-blue:#0088ff] [--system-blue-deep:#006edb] [--low-power-yellow:oklch(0.82_0.17_85)] [--honey:oklch(0.817_0.161_75.1)] [--label-primary:oklch(0.2_0.008_250)] [--label-secondary:oklch(0.43_0.008_250)] [--label-tertiary:oklch(0.55_0.006_250)] [--label-quaternary:oklch(0.64_0.005_250)] [--window-frame-text:var(--label-primary)] [--text-color:var(--label-primary)] [--placeholder-text:var(--label-tertiary)] [--disabled-control-text:oklch(0.5_0.006_250/0.55)] [--window-background:oklch(0.955_0.004_250)] [--control-background:oklch(0.93_0.006_250/0.92)] [--text-background:oklch(0.985_0.003_250)] [--under-page-background:oklch(0.9_0.006_250)] [--control-hover:oklch(1_0_0/0.58)] [--control-active:oklch(0.82_0.01_250/0.64)] [--selected-content-background:var(--system-blue)] [--unemphasized-selection:oklch(0.78_0.01_250/0.76)] [--selected-control-text:white] [--keyboard-focus:#0088ff] [--link-color:#0071e3] [--ink:var(--label-primary)] [--muted:var(--label-secondary)] [--glass:oklch(0.985_0.006_250/0.7)] [--glass-strong:oklch(0.985_0.004_250/0.88)] [--glass-clear:oklch(0.98_0.012_235/0.38)] [--glass-regular:oklch(0.975_0.008_245/0.76)] [--material-titlebar:oklch(0.945_0.006_245/0.91)] [--material-toolbar:oklch(0.94_0.008_245/0.88)] [--material-sidebar:oklch(0.925_0.012_245/0.84)] [--material-menu:oklch(0.965_0.006_245/0.86)] [--material-popover:oklch(0.97_0.006_245/0.9)] [--material-content:var(--text-background)] [--material-raised:oklch(0.995_0_0/0.98)] [--material-status:oklch(0.945_0.005_250/0.94)] [--glass-highlight:oklch(1_0_0/0.72)] [--glass-stroke:oklch(1_0_0/0.46)] [--glass-shadow:oklch(0.08_0.035_245/0.24)] [--separator:oklch(0.45_0.01_250/0.22)] [--shadow:0_26px_64px_oklch(0.08_0.035_245/0.3),0_5px_18px_oklch(0.08_0.03_245/0.2)] [--shadow-inactive:0_13px_34px_oklch(0.08_0.03_245/0.18),0_2px_8px_oklch(0.08_0.03_245/0.14)] [--ease-mac:cubic-bezier(0.22,1,0.36,1)] w-full h-full m-0 overflow-hidden">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -28,11 +26,163 @@
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a84ff'/%3E%3Cpath d='M32 0h18a14 14 0 0 1 14 14v36a14 14 0 0 1-14 14H32z' fill='%23a8dcff'/%3E%3Cpath d='M21 22v8m22-8v8M20 42c8 7 16 7 24 0M32 14v25' fill='none' stroke='%2314273a' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E" />
     <title>Renan Leonel</title>
+    <link rel="canonical" href="https://renanleonel.com/" />
+    <!--
+      First paint: a static copy of the lock screen, styled inline, so the page
+      shows the real first screen before any JavaScript or the main stylesheet
+      arrives. React replaces it with the identical LoginScreen on mount; keep
+      the two in sync (src/features/desktop/components/login-screen.tsx).
+    -->
+    <style>
+      /*
+        Inter is the desktop font on non-Apple platforms (Apple devices use San
+        Francisco). The lock screen uses the system stack instead, so the first
+        frame never waits on a font. The asset loader preloads Inter during the
+        lock screen; `optional` then uses it if it is ready and otherwise keeps
+        the system font for the visit, so desktop text never reflows.
+      */
+      @font-face {
+        font-family: 'Inter Variable';
+        font-style: normal;
+        font-display: optional;
+        font-weight: 100 900;
+        src: url('/fonts/inter-latin-variable.woff2') format('woff2');
+        unicode-range:
+          U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+          U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      @font-face {
+        font-family: 'Inter Variable';
+        font-style: normal;
+        font-display: optional;
+        font-weight: 100 900;
+        src: url('/fonts/inter-latin-ext-variable.woff2') format('woff2');
+        unicode-range:
+          U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+          U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+          U+2C60-2C7F, U+A720-A7FF;
+      }
+      .static-lock {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 0;
+        color: white;
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', Roboto,
+          'Helvetica Neue', sans-serif;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        text-shadow: 0 2px 12px oklch(0.08 0.03 245 / 0.4);
+        background: oklch(0.36 0.09 231) center / cover no-repeat;
+      }
+      /* Added by the asset loader after first paint, so the photo never
+         competes with the first frame. */
+      .static-lock.has-wallpaper {
+        background-image: url('/wallpaper-tahoe-day.jpg');
+        background-image: image-set(
+          url('/wallpaper-tahoe-day.avif') type('image/avif'),
+          url('/wallpaper-tahoe-day.webp') type('image/webp'),
+          url('/wallpaper-tahoe-day.jpg') type('image/jpeg')
+        );
+      }
+      .static-lock::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: oklch(0.12 0.04 245 / 0.22);
+        backdrop-filter: blur(11px) saturate(0.9);
+        -webkit-backdrop-filter: blur(11px) saturate(0.9);
+      }
+      .static-lock > div {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .static-lock__time {
+        margin-top: 12vh;
+      }
+      .static-lock__time span {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: oklch(1 0 0 / 0.86);
+      }
+      .static-lock__time strong {
+        margin-top: 4px;
+        font-size: clamp(5.5rem, 11vw, 9rem);
+        line-height: 0.95;
+        letter-spacing: -0.035em;
+        font-weight: 600;
+        color: oklch(1 0 0 / 0.9);
+        font-variant-numeric: tabular-nums;
+      }
+      .static-lock__user {
+        margin-top: auto;
+        margin-bottom: 12vh;
+      }
+      .static-lock__user i {
+        width: 72px;
+        height: 72px;
+        display: grid;
+        place-items: center;
+        margin-bottom: 10px;
+        border-radius: 50%;
+        font-size: 28px;
+        font-style: normal;
+        font-weight: 600;
+        background: linear-gradient(180deg, oklch(0.79 0.17 70), oklch(0.6 0.18 35));
+        box-shadow:
+          inset 0 0 0 1px oklch(1 0 0 / 0.45),
+          0 9px 28px oklch(0.08 0.03 245 / 0.25);
+      }
+      .static-lock__user strong {
+        font-size: 15px;
+        font-weight: 700;
+      }
+      .static-lock__user small {
+        margin-top: 6px;
+        font-size: 13px;
+        color: oklch(1 0 0 / 0.75);
+      }
+      @media (max-width: 600px) {
+        .static-lock__time span {
+          font-size: 18px;
+        }
+      }
+    </style>
   </head>
   <body class="w-full h-full m-0 overflow-hidden">
     <div
       id="root"
-      class="[&,&_*]:box-border w-full h-full m-0 overflow-hidden [&_button,&_input]:[font:inherit] [&_button,&_a]:text-inherit [&_a]:[text-decoration:none] [&_button:focus-visible,&_input:focus-visible,&_a:focus-visible]:[outline:2px_solid_var(--keyboard-focus)] [&_button:focus-visible,&_input:focus-visible,&_a:focus-visible]:outline-offset-2 motion-reduce:[&,&_*]:scroll-auto! motion-reduce:[&,&_*]:[animation-duration:1ms]! motion-reduce:[&,&_*]:[animation-iteration-count:1]! motion-reduce:[&,&_*]:duration-[1ms]! motion-reduce:[&_*::before]:scroll-auto! motion-reduce:[&_*::before]:[animation-duration:1ms]! motion-reduce:[&_*::before]:[animation-iteration-count:1]! motion-reduce:[&_*::before]:duration-[1ms]! motion-reduce:[&_*::after]:scroll-auto! motion-reduce:[&_*::after]:[animation-duration:1ms]! motion-reduce:[&_*::after]:[animation-iteration-count:1]! motion-reduce:[&_*::after]:duration-[1ms]!"></div>
+      class="w-full h-full m-0 overflow-hidden motion-reduce:[&,&_*]:scroll-auto! motion-reduce:[&,&_*]:[animation-duration:1ms]! motion-reduce:[&,&_*]:[animation-iteration-count:1]! motion-reduce:[&,&_*]:duration-[1ms]! motion-reduce:[&_*::before]:scroll-auto! motion-reduce:[&_*::before]:[animation-duration:1ms]! motion-reduce:[&_*::before]:[animation-iteration-count:1]! motion-reduce:[&_*::before]:duration-[1ms]! motion-reduce:[&_*::after]:scroll-auto! motion-reduce:[&_*::after]:[animation-duration:1ms]! motion-reduce:[&_*::after]:[animation-iteration-count:1]! motion-reduce:[&_*::after]:duration-[1ms]!">
+      <div class="static-lock">
+        <div class="static-lock__time">
+          <span id="static-lock-date"></span>
+          <strong id="static-lock-time"></strong>
+        </div>
+        <div class="static-lock__user">
+          <i>R</i>
+          <strong>Renan</strong>
+          <small>Click to log in</small>
+        </div>
+      </div>
+      <script>
+        (function () {
+          var now = new Date();
+          document.getElementById('static-lock-date').textContent = now.toLocaleDateString(
+            'en-US',
+            { weekday: 'long', month: 'long', day: 'numeric' },
+          );
+          document.getElementById('static-lock-time').textContent = now
+            .toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+            .replace(/\s?[AP]M$/, '');
+        })();
+      </script>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

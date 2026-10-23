@@ -5,6 +5,8 @@ import type { FinderPreferences } from '@/features/finder/domain/models/finder-p
 
 export type FinderActions = {
   setSection: (section: FinderSection) => void;
+  goBack: () => void;
+  goForward: () => void;
   updatePreferences: (patch: Partial<FinderPreferences>) => void;
 };
 

@@ -58,7 +58,7 @@ Use a clean server/browser session for final verification.
 
 ### Startup and session
 
-- Complete startup boot and login; confirm timing, focus, and transitions.
+- Load the production build (`pnpm build && pnpm preview`); confirm the static lock screen paints first and React's lock screen replaces it without a visible change, then log in.
 - Lock or log out and return to login.
 - Sleep and wake without losing the intended session state.
 - Restart through the boot/login flow.
@@ -81,6 +81,11 @@ Use a clean server/browser session for final verification.
 - Reveal/hide the desktop and verify window transforms and accessibility state.
 - Repeat key paths below and above the 900px and 600px responsive breakpoints.
 
+### Window chrome
+
+- Unified windows: traffic lights float over the sidebar or toolbar; dragging works from toolbars and the sidebar header but not from their controls; double-clicking a toolbar maximizes and restores.
+- Below 600px, toolbars leave room for the traffic lights once sidebars hide.
+
 ### Desktop surfaces
 
 - Exercise every menu-bar menu and supported command.
@@ -98,7 +103,7 @@ Use a clean server/browser session for final verification.
 - Photos: gallery and responsive overflow/layout.
 - Notes: note selection and Today task toggles from both Notes and desktop widget.
 - Terminal: all supported commands, unknown command, empty input, `date`, `clear`, and focus behavior.
-- Settings: every section, appearance, accent picker, persistent controls, and session-only controls.
+- Settings: every section, sidebar search, back/forward, appearance thumbnails, accent swatches, persistent controls, and session-only controls.
 - About: content, outbound links, and intentionally inert More Info control.
 
 ### Persistence and failure behavior

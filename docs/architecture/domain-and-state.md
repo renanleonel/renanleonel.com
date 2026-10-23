@@ -63,7 +63,7 @@ WindowManagerProvider
 | `FinderProvider` | Current section and Finder preferences | Preferences persist; section is session-only |
 | `NotesProvider` | Selected note and completed Today tasks | Completed tasks persist; selection is session-only |
 | `DesktopCompositionContainer` | Selected System Settings section | Session only, survives closing the Settings window |
-| `SettingsProvider` | Accent-picker disclosure and simulated panel toggles | Local to the mounted Settings content |
+| `SettingsProvider` | In-window back/forward history of panes and simulated panel toggles | Local to the mounted Settings content |
 | Feature containers/components | Search text, selected item, Terminal lines, Messages conversation state, popovers | Local to the mounted feature |
 
 Opening an already-open application restores and focuses the same window. Minimizing keeps its content mounted, so local state survives. Closing removes the window; reopening mounts fresh feature-local state. Provider-owned Finder and Notes state survives closing their windows because those providers live above application content.
